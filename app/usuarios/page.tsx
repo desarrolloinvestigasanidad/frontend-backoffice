@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,35 +32,38 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
-const users = [
-  {
-    id: 1,
-    name: "Juan Pérez",
-    email: "juan@example.com",
-    role: "Editor",
-    status: "Activo",
-    lastLogin: "2025-02-15 10:30",
-    createdAt: "2024-12-01",
-  },
-  {
-    id: 2,
-    name: "María García",
-    email: "maria@example.com",
-    role: "Autor",
-    status: "Inactivo",
-    lastLogin: "2025-01-20 15:45",
-    createdAt: "2024-11-15",
-  },
-  // Add more mock data as needed
-];
-
 const roles = ["Administrador", "Editor", "Autor", "Revisor"];
 
 export default function UsuariosPage() {
+  const [users, setUsers] = useState<
+    {
+      id: number;
+      name: string;
+      email: string;
+      role: string;
+      status: string;
+      lastLogin: string;
+      createdAt: string;
+    }[]
+  >([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(
-    null
-  );
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    lastLogin: string;
+    createdAt: string;
+  } | null>(null);
+
+  // Obtenemos los usuarios desde el backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => console.error("Error al obtener usuarios:", err));
+  }, []);
 
   const filteredUsers = users.filter(
     (user) =>

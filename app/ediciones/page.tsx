@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,39 +23,74 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const editions = [
-  {
-    id: 1,
-    name: "Edición Febrero 2025",
-    startDate: "2025-02-01",
-    endDate: "2025-02-28",
-    status: "Activa",
-    participants: 45,
-    books: 3,
-    chapters: 78,
-  },
-  {
-    id: 2,
-    name: "Edición Marzo 2025",
-    startDate: "2025-03-01",
-    endDate: "2025-03-31",
-    status: "Próxima",
-    participants: 0,
-    books: 0,
-    chapters: 0,
-  },
-  // Add more mock data as needed
-];
-
 export default function EdicionesPage() {
+  // Este flag evita que se renderice en el servidor y solo se monte en el cliente
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+
+  interface Edition {
+    id: number;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    participants: number;
+    books: number;
+    chapters: number;
+  }
+
+  const [editions, setEditions] = useState<Edition[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEdition, setSelectedEdition] = useState<
-    (typeof editions)[0] | null
-  >(null);
+  const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [newEdition, setNewEdition] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+    status: "Próxima",
+  });
+
+  // Cargar ediciones desde el backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/editions")
+      .then((res) => res.json())
+      .then((data) => setEditions(data))
+      .catch((err) => console.error("Error al obtener ediciones:", err));
+  }, []);
 
   const filteredEditions = editions.filter((edition) =>
     edition.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateEdition = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5000/api/editions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newEdition),
+      });
+      if (!response.ok) {
+        throw new Error("Error al crear la edición");
+      }
+      const createdEdition = await response.json();
+      setEditions((prev) => [...prev, createdEdition]);
+      setNewEdition({
+        name: "",
+        startDate: "",
+        endDate: "",
+        status: "Próxima",
+      });
+      setOpenCreateDialog(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className='space-y-4'>
@@ -67,7 +102,97 @@ export default function EdicionesPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className='max-w-sm'
         />
-        <Button>Crear Nueva Edición</Button>
+        <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setOpenCreateDialog(true)}>
+              Crear Nueva Edición
+            </Button>
+          </DialogTrigger>
+          <DialogContent className='max-w-4xl'>
+            <DialogHeader>
+              <DialogTitle>Crear Nueva Edición</DialogTitle>
+              <DialogDescription>
+                Ingresa los datos para la nueva edición.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateEdition} className='space-y-4'>
+              <div className='grid grid-cols-1 gap-4'>
+                <div>
+                  <label
+                    htmlFor='name'
+                    className='block text-sm font-medium text-gray-700'>
+                    Nombre
+                  </label>
+                  <Input
+                    id='name'
+                    placeholder='Nombre de la edición'
+                    value={newEdition.name}
+                    onChange={(e) =>
+                      setNewEdition({ ...newEdition, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor='startDate'
+                    className='block text-sm font-medium text-gray-700'>
+                    Fecha de Inicio
+                  </label>
+                  <Input
+                    id='startDate'
+                    type='date'
+                    value={newEdition.startDate}
+                    onChange={(e) =>
+                      setNewEdition({
+                        ...newEdition,
+                        startDate: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor='endDate'
+                    className='block text-sm font-medium text-gray-700'>
+                    Fecha de Fin
+                  </label>
+                  <Input
+                    id='endDate'
+                    type='date'
+                    value={newEdition.endDate}
+                    onChange={(e) =>
+                      setNewEdition({ ...newEdition, endDate: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor='status'
+                    className='block text-sm font-medium text-gray-700'>
+                    Estado
+                  </label>
+                  <Input
+                    id='status'
+                    placeholder='Estado'
+                    value={newEdition.status}
+                    onChange={(e) =>
+                      setNewEdition({ ...newEdition, status: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className='flex justify-end space-x-2'>
+                <Button
+                  type='button'
+                  variant='secondary'
+                  onClick={() => setOpenCreateDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button type='submit'>Crear Edición</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
       <Table>
         <TableHeader>
@@ -171,7 +296,6 @@ export default function EdicionesPage() {
                               <CardTitle>Libros de la Edición</CardTitle>
                             </CardHeader>
                             <CardContent>
-                              {/* Aquí iría una tabla o lista de libros */}
                               <p>Lista de libros de la edición</p>
                             </CardContent>
                           </Card>
@@ -182,7 +306,6 @@ export default function EdicionesPage() {
                               <CardTitle>Participantes</CardTitle>
                             </CardHeader>
                             <CardContent>
-                              {/* Aquí iría una lista de participantes */}
                               <p>Lista de participantes de la edición</p>
                             </CardContent>
                           </Card>

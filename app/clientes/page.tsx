@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,40 +22,33 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Mock data for customers
-const customers = [
-  {
-    id: 1,
-    name: "Juan Pérez",
-    email: "juan@example.com",
-    phone: "123-456-7890",
-    status: "Activo",
-    dni: "12345678A",
-    profession: "Médico",
-    community: "Madrid",
-    registrationDate: "2023-01-15",
-    lastLogin: "2023-06-01",
-  },
-  {
-    id: 2,
-    name: "María García",
-    email: "maria@example.com",
-    phone: "098-765-4321",
-    status: "Inactivo",
-    dni: "87654321B",
-    profession: "Enfermera",
-    community: "Cataluña",
-    registrationDate: "2023-02-20",
-    lastLogin: "2023-05-28",
-  },
-  // Add more mock data as needed
-];
-
 export default function ClientesPage() {
+  interface Customer {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    dni: string;
+    status: string;
+    profession?: string;
+    community?: string;
+    registrationDate?: string;
+    lastLogin?: string;
+  }
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState<
-    (typeof customers)[0] | null
-  >(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+
+  // Obtenemos los clientes desde el backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/customers")
+      .then((res) => res.json())
+      .then((data) => setCustomers(data))
+      .catch((err) => console.error("Error al obtener clientes:", err));
+  }, []);
 
   const filteredCustomers = customers.filter(
     (customer) =>
