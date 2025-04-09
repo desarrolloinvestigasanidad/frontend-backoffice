@@ -43,12 +43,12 @@ const navItems = [
   { label: "Roles", href: "/dashboard/roles", icon: <Settings size={18} /> },
   {
     label: "Plantillas",
-    href: "/dashboard/plantillas",
+    href: "/dashboard/templates",
     icon: <FileText size={18} />,
   },
   {
     label: "Configuración",
-    href: "/configuracion",
+    href: "/dashboard/configuration",
     icon: <Settings size={18} />,
   },
 ];
