@@ -1,4 +1,3 @@
-// components/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -19,13 +18,6 @@ const navItems = [
     label: "Ediciones",
     href: "/dashboard/editions",
     icon: <BookOpen size={18} />,
-    children: [
-      { label: "Listado de Ediciones", href: "/dashboard/editions" },
-      {
-        label: "Libros y Capítulos",
-        href: "/dashboard/editions", // Al ingresar aquí, el usuario accederá a una edición y, dentro de ella, podrá gestionar libros y capítulos.
-      },
-    ],
   },
   {
     label: "Libros Propios",
@@ -79,34 +71,13 @@ export default function Sidebar() {
               <Link
                 href={item.href}
                 className={`flex items-center p-2 rounded-md transition-colors ${
-                  pathname === item.href ||
-                  (item.children &&
-                    item.children.some((child) =>
-                      pathname.startsWith(child.href)
-                    ))
+                  pathname === item.href
                     ? "bg-purple-100 font-semibold text-purple-700"
                     : "hover:bg-purple-50"
                 }`}>
                 <span className='mr-2'>{item.icon}</span>
                 {item.label}
               </Link>
-              {item.children && (
-                <ul className='ml-6 mt-1 space-y-1'>
-                  {item.children.map((child) => (
-                    <li key={child.href}>
-                      <Link
-                        href={child.href}
-                        className={`block p-1 rounded transition-colors ${
-                          pathname.startsWith(child.href)
-                            ? "bg-purple-50 font-semibold text-purple-700"
-                            : "hover:bg-purple-50"
-                        }`}>
-                        {child.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </li>
           ))}
         </ul>

@@ -5,19 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Mail,
-  Phone,
-  User,
-  MapPin,
-  Calendar,
-  Edit,
-  Save,
-  X,
-  LogIn,
-} from "lucide-react";
+import { Edit, Save, X, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
+// Tipos de datos
 type Client = {
   id: string;
   firstName: string;
@@ -38,25 +29,58 @@ type Payment = {
   date: string;
 };
 
-type Publication = {
+type Book = {
   id: string;
   title: string;
-  type: string;
-  date: string;
+  subtitle?: string;
+  price: number;
+  isbn?: string;
+  cover?: string;
+  openDate?: string;
+  deadlineChapters?: string;
+  publishDate?: string;
+  interests?: string;
+  bookType: string;
   status: string;
+  active: boolean;
 };
+
+type Chapter = {
+  id: string;
+  title: string;
+  status?: string;
+  // Otras propiedades si es necesario
+};
+
+// Tipo de datos para Edición
+type Edition = {
+  id: string;
+  title: string;
+  // Puedes agregar otras propiedades según lo requieras
+};
+
+// Extender Book para asociar la edición correspondiente
+type EditionBook = Book & { editionId: string };
 
 export default function ClientDetailPage() {
   const router = useRouter();
   const { id } = useParams();
 
+  // Estados del cliente y sus datos
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Client>>({});
   const [message, setMessage] = useState("");
+
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [publications, setPublications] = useState<Publication[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+
+  // Estados para datos relacionados a ediciones
+  const [editions, setEditions] = useState<Edition[]>([]);
+  const [editionBooks, setEditionBooks] = useState<EditionBook[]>([]);
+  const [editionChapters, setEditionChapters] = useState<Chapter[]>([]);
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -78,41 +102,146 @@ export default function ClientDetailPage() {
     if (id) fetchClient();
   }, [id]);
 
-  // Cargar pagos y publicaciones una vez que se obtuvo el cliente
+  // Cargar pagos una vez que se obtuvo el cliente
   useEffect(() => {
-    const fetchAdditionalData = async () => {
+    const fetchPayments = async () => {
       if (!id) return;
       try {
         const token = sessionStorage.getItem("token");
-        // Obtener pagos
-        const resPayments = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}/payments`,
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/payments/?userId=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const paymentsData = await resPayments.json();
-
+        const paymentsData = await res.json();
         const paymentsArray = Array.isArray(paymentsData)
           ? paymentsData
           : paymentsData.payments ?? [];
         setPayments(paymentsArray);
-        // Obtener publicaciones
-        const resPublications = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}/publications`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const publicationsData = await resPublications.json();
-
-        const publicationsArray = Array.isArray(publicationsData)
-          ? publicationsData
-          : publicationsData.publications ?? [];
-        setPublications(publicationsArray);
       } catch (error) {
-        console.error("Error al cargar pagos o publicaciones:", error);
+        console.error("Error al cargar pagos:", error);
       }
     };
-    if (client) fetchAdditionalData();
+    if (client) fetchPayments();
   }, [id, client]);
 
+  // Cargar libros del cliente (libros propios) usando query param userId
+  useEffect(() => {
+    const fetchBooks = async () => {
+      if (!id) return;
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/books?userId=${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        setBooks(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al cargar libros:", error);
+      }
+    };
+    fetchBooks();
+  }, [id]);
+
+  // Cargar capítulos del cliente (capítulos propios)
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (!id) return;
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?userId=${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        setChapters(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al cargar capítulos:", error);
+      }
+    };
+    fetchChapters();
+  }, [id]);
+
+  // -----------------------------------------
+  // Integrar endpoints de ediciones, libros y capítulos pertenecientes a ediciones
+  // -----------------------------------------
+
+  // 1. Obtener Ediciones
+  useEffect(() => {
+    const fetchEditions = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/editions`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        setEditions(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al cargar ediciones:", error);
+      }
+    };
+    fetchEditions();
+  }, []);
+
+  // 2. Obtener libros para cada edición y asociar el id de la edición a cada libro
+  useEffect(() => {
+    const fetchEditionBooks = async () => {
+      if (editions.length === 0) return;
+      try {
+        const token = sessionStorage.getItem("token");
+        const booksPromises = editions.map(async (edition) => {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${edition.id}/books`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const booksData = await res.json();
+          // Asegurarse de que es un arreglo y asociamos la edición a cada libro
+          if (Array.isArray(booksData)) {
+            return booksData.map((book: Book) => ({
+              ...book,
+              editionId: edition.id,
+            }));
+          }
+          return [];
+        });
+        const booksNested = await Promise.all(booksPromises);
+        const booksFlat = booksNested.flat();
+        setEditionBooks(booksFlat);
+      } catch (error) {
+        console.error("Error al cargar libros de ediciones:", error);
+      }
+    };
+    fetchEditionBooks();
+  }, [editions]);
+
+  // 3. Obtener capítulos para cada libro dentro de las ediciones
+  useEffect(() => {
+    const fetchEditionChapters = async () => {
+      if (editionBooks.length === 0) return;
+      try {
+        const token = sessionStorage.getItem("token");
+        const chaptersPromises = editionBooks.map(async (book) => {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${book.editionId}/books/${book.id}/chapters`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const chaptersData = await res.json();
+          return Array.isArray(chaptersData) ? chaptersData : [];
+        });
+        const chaptersNested = await Promise.all(chaptersPromises);
+        const chaptersFlat = chaptersNested.flat();
+        setEditionChapters(chaptersFlat);
+      } catch (error) {
+        console.error("Error al cargar capítulos de ediciones:", error);
+      }
+    };
+    fetchEditionChapters();
+  }, [editionBooks]);
+
+  // -----------------------------------------
+  // Funciones para editar, guardar, eliminar, e impersonar
+  // -----------------------------------------
   const handleEdit = () => {
     if (client) {
       setEditData({
@@ -195,9 +324,8 @@ export default function ClientDetailPage() {
         throw new Error(errorData.message || "Error al impersonar cliente");
       }
       const { impersonationToken } = await res.json();
-      // Guarda el token de impersonación y redirige a la vista del cliente (por ejemplo, dashboard)
       sessionStorage.setItem("token", impersonationToken);
-      router.push("/dashboard"); // Ajusta la ruta según tu estructura
+      router.push("/dashboard");
     } catch (error: any) {
       alert(error.message);
     }
@@ -396,7 +524,7 @@ export default function ClientDetailPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
           <h2 className='text-xl font-semibold mb-4'>Pagos Realizados</h2>
-          {payments?.length === 0 ? (
+          {payments.length === 0 ? (
             <p>No se encontraron pagos.</p>
           ) : (
             <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
@@ -422,36 +550,135 @@ export default function ClientDetailPage() {
           )}
         </motion.div>
 
-        {/* Sección de Publicaciones */}
+        {/* Sección de Libros Propios */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
           className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Publicaciones</h2>
-          {publications.length === 0 ? (
-            <p>No se encontraron publicaciones.</p>
+          <h2 className='text-xl font-semibold mb-4'>Mis Libros</h2>
+          {books.length === 0 ? (
+            <p>No se encontraron libros.</p>
           ) : (
             <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
               <thead className='bg-purple-100'>
                 <tr>
                   <th className='px-4 py-2'>ID</th>
                   <th className='px-4 py-2'>Título</th>
-                  <th className='px-4 py-2'>Tipo</th>
-                  <th className='px-4 py-2'>Fecha</th>
+                  <th className='px-4 py-2'>Precio</th>
+                  <th className='px-4 py-2'>Publicación</th>
+                </tr>
+              </thead>
+              <tbody>
+                {books.map((book) => (
+                  <tr key={book.id} className='hover:bg-gray-50'>
+                    <td className='border px-4 py-2'>{book.id}</td>
+                    <td className='border px-4 py-2'>{book.title}</td>
+                    <td className='border px-4 py-2'>{book.price}</td>
+                    <td className='border px-4 py-2'>
+                      {book.publishDate
+                        ? new Date(book.publishDate).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </motion.div>
+
+        {/* Sección de Capítulos Propios */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
+          <h2 className='text-xl font-semibold mb-4'>Mis Capítulos</h2>
+          {chapters.length === 0 ? (
+            <p>No se encontraron capítulos.</p>
+          ) : (
+            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
+              <thead className='bg-purple-100'>
+                <tr>
+                  <th className='px-4 py-2'>ID</th>
+                  <th className='px-4 py-2'>Título</th>
                   <th className='px-4 py-2'>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {publications.map((pub) => (
-                  <tr key={pub.id} className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{pub.id}</td>
-                    <td className='border px-4 py-2'>{pub.title}</td>
-                    <td className='border px-4 py-2'>{pub.type}</td>
+                {chapters.map((chapter) => (
+                  <tr key={chapter.id} className='hover:bg-gray-50'>
+                    <td className='border px-4 py-2'>{chapter.id}</td>
+                    <td className='border px-4 py-2'>{chapter.title}</td>
                     <td className='border px-4 py-2'>
-                      {new Date(pub.date).toLocaleDateString()}
+                      {chapter.status || "N/A"}
                     </td>
-                    <td className='border px-4 py-2'>{pub.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </motion.div>
+
+        {/* Sección de Libros en Ediciones */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
+          <h2 className='text-xl font-semibold mb-4'>Libros en Ediciones</h2>
+          {editionBooks.length === 0 ? (
+            <p>No se encontraron libros en ediciones.</p>
+          ) : (
+            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
+              <thead className='bg-purple-100'>
+                <tr>
+                  <th className='px-4 py-2'>ID</th>
+                  <th className='px-4 py-2'>Título</th>
+                  <th className='px-4 py-2'>Edición ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editionBooks.map((book) => (
+                  <tr
+                    key={`${book.editionId}-${book.id}`}
+                    className='hover:bg-gray-50'>
+                    <td className='border px-4 py-2'>{book.id}</td>
+                    <td className='border px-4 py-2'>{book.title}</td>
+                    <td className='border px-4 py-2'>{book.editionId}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </motion.div>
+
+        {/* Sección de Capítulos en Ediciones */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
+          <h2 className='text-xl font-semibold mb-4'>Capítulos en Ediciones</h2>
+          {editionChapters.length === 0 ? (
+            <p>No se encontraron capítulos en ediciones.</p>
+          ) : (
+            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
+              <thead className='bg-purple-100'>
+                <tr>
+                  <th className='px-4 py-2'>ID</th>
+                  <th className='px-4 py-2'>Título</th>
+                  <th className='px-4 py-2'>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editionChapters.map((chapter) => (
+                  <tr key={chapter.id} className='hover:bg-gray-50'>
+                    <td className='border px-4 py-2'>{chapter.id}</td>
+                    <td className='border px-4 py-2'>{chapter.title}</td>
+                    <td className='border px-4 py-2'>
+                      {chapter.status || "N/A"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
