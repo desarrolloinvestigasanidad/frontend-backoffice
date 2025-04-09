@@ -158,16 +158,7 @@ export default function NewBookPage() {
             onChange={handleChange}
           />
         </div>
-        <div className='space-y-2'>
-          <Label htmlFor='interests'>Intereses</Label>
-          <Input
-            id='interests'
-            name='interests'
-            value={formData.interests}
-            onChange={handleChange}
-            placeholder='Describe los intereses o temas del libro'
-          />
-        </div>
+
         <div className='flex gap-2'>
           <Button type='submit' disabled={saving}>
             {saving ? "Guardando..." : "Subir Libro"}

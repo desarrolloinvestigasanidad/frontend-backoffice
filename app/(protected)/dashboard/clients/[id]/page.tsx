@@ -451,20 +451,7 @@ export default function ClientDetailPage() {
                     </p>
                   )}
                 </div>
-                <div>
-                  <Label>Dirección</Label>
-                  {editing ? (
-                    <Input
-                      name='address'
-                      value={editData.address || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>
-                      {client.address || "No especificado"}
-                    </p>
-                  )}
-                </div>
+
                 <div>
                   <Label>Ubicación</Label>
                   {editing ? (

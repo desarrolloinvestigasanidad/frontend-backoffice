@@ -148,7 +148,7 @@ export default function PaymentsPage() {
               <th className='px-2 py-2 border-r border-gray-300'>DNI</th>
               <th className='px-2 py-2 border-r border-gray-300'>Correo</th>
               <th className='px-2 py-2 border-r border-gray-300'>Teléfono</th>
-              <th className='px-2 py-2 border-r border-gray-300'>Dirección</th>
+
               <th className='px-2 py-2 border-r border-gray-300'>
                 Fecha de pago
               </th>
@@ -164,7 +164,6 @@ export default function PaymentsPage() {
                 "DNI",
                 "Correo",
                 "Teléfono",
-                "Dirección",
                 "Fecha de pago",
                 "Método",
                 "Monto",
@@ -212,10 +211,7 @@ export default function PaymentsPage() {
                     <td className='px-2 py-2 border-r border-gray-300'>
                       (Sin teléfono)
                     </td>
-                    {/* Dirección */}
-                    <td className='px-2 py-2 border-r border-gray-300'>
-                      (Sin dirección)
-                    </td>
+
                     {/* Fecha de pago */}
                     <td className='px-2 py-2 border-r border-gray-300'>
                       {formatDate(payment.paymentDate)}
@@ -269,10 +265,7 @@ export default function PaymentsPage() {
                   <td className='px-2 py-2 border-r border-gray-300'>
                     {clientData.phone}
                   </td>
-                  {/* Dirección */}
-                  <td className='px-2 py-2 border-r border-gray-300'>
-                    {clientData.address}
-                  </td>
+
                   {/* Fecha de pago */}
                   <td className='px-2 py-2 border-r border-gray-300'>
                     {formatDate(payment.paymentDate)}
