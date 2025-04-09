@@ -21,7 +21,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Forzamos que el usuario siempre ingrese sus credenciales
   useEffect(() => {
     setIsVerifying(false);
   }, []);
@@ -117,8 +116,8 @@ export default function LoginPage() {
                 Panel de Administración
               </h2>
               <p className='text-white/90 mb-6 text-sm md:text-base'>
-                Acceso exclusivo para administradores. Ingresa tus credenciales
-                para continuar.
+                Acceso exclusivo para administradores. Ingresa tus
+                DNI/NIE/Pasaporte para continuar.
               </p>
               <div className='flex items-center space-x-2 text-white/80'>
                 <div className='w-8 h-8 rounded-full bg-white/20 flex items-center justify-center'>
@@ -143,7 +142,8 @@ export default function LoginPage() {
               Iniciar Sesión - Administrador
             </h1>
             <p className='text-gray-600 text-sm md:text-base'>
-              Ingresa tus credenciales para acceder al panel de administración.
+              Ingresa tu DNI/NIE/Pasaporte para acceder al panel de
+              administración.
             </p>
           </motion.div>
 
