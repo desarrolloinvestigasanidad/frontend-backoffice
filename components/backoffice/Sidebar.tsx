@@ -51,6 +51,11 @@ const navItems = [
     href: "/dashboard/configuration",
     icon: <Settings size={18} />,
   },
+  {
+    label: "Certificados",
+    href: "/dashboard/certificates",
+    icon: <FileText size={18} />,
+  },
 ];
 
 export default function Sidebar() {
