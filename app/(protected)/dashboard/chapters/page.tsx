@@ -4,11 +4,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Ajusta este tipo según la información real que te devuelva el backend
 type Chapter = {
-  id: string;
-  title: string;
-  studyType: string;
-  status: string;
+  id: string; // Código o identificador principal
+  title: string; // Título
+  studyType: string; // Tipo de estudio (ej: “caso clínico”)
+  status: string; // Estado (ej: “borrador”, “pendiente”, etc.)
+  // Otros campos si los necesitas, e.j.:
+  // authorName?: string;
+  // createdAt?: string;
+  // bookTitle?: string;
+  // etc.
 };
 
 export default function ChaptersPage() {
@@ -22,12 +28,16 @@ export default function ChaptersPage() {
         const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/chapters`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
+
         if (!res.ok) {
           const errData = await res.json();
           throw new Error(errData.message || "Error al cargar capítulos");
         }
+
         const data = await res.json();
         // Asegúrate de que 'data' sea un arreglo o extrae la propiedad necesaria
         const chaptersArray = Array.isArray(data) ? data : data.chapters ?? [];
@@ -42,41 +52,68 @@ export default function ChaptersPage() {
     fetchChapters();
   }, []);
 
-  if (loading) return <div>Cargando capítulos propios...</div>;
+  if (loading) return <div>Cargando capítulos...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <section className='max-w-4xl mx-auto p-6 space-y-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>Capítulos Propios</h1>
-        <Link href='/dashboard/chapters/new'>
-          <Button>Crear Capítulo Propio</Button>
-        </Link>
-      </div>
+    <section className='max-w-5xl mx-auto p-6 space-y-4'>
+      <h1 className='text-2xl font-bold'>Capítulos</h1>
+
       {chapters.length === 0 ? (
-        <p>No hay capítulos propios registrados.</p>
+        <p>No hay capítulos registrados.</p>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          {chapters.map((chapter) => (
-            <div
-              key={chapter.id}
-              className='border rounded-md p-4 shadow hover:shadow-lg transition'>
-              <h2 className='font-bold text-lg'>{chapter.title}</h2>
-              <p className='text-sm text-gray-600'>
-                <strong>Tipo de Estudio:</strong> {chapter.studyType}
-              </p>
-              <p className='text-sm text-gray-800 mt-1'>
-                <strong>Estado:</strong> {chapter.status}
-              </p>
-              <div className='mt-4'>
-                <Link href={`/dashboard/chapters/${chapter.id}`}>
-                  <Button variant='outline' size='sm'>
-                    Ver / Editar
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          ))}
+        <div className='overflow-x-auto border rounded-md shadow-sm'>
+          <table className='min-w-full text-left border-collapse'>
+            <thead className='bg-gray-50 border-b'>
+              <tr>
+                <th className='px-4 py-2 font-semibold text-gray-600'>#</th>
+                <th className='px-4 py-2 font-semibold text-gray-600'>
+                  Código
+                </th>
+                <th className='px-4 py-2 font-semibold text-gray-600'>
+                  Título
+                </th>
+                <th className='px-4 py-2 font-semibold text-gray-600'>
+                  Tipo de Estudio
+                </th>
+                <th className='px-4 py-2 font-semibold text-gray-600'>
+                  Estado
+                </th>
+                {/* Si tienes más campos, agrégalos aquí */}
+                <th className='px-4 py-2 font-semibold text-gray-600'>
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className='divide-y'>
+              {chapters.map((chapter, index) => (
+                <tr key={chapter.id} className='hover:bg-gray-50'>
+                  <td className='px-4 py-2 text-sm text-gray-700'>
+                    {index + 1}
+                  </td>
+                  <td className='px-4 py-2 text-sm text-gray-700'>
+                    {chapter.id}
+                  </td>
+                  <td className='px-4 py-2 text-sm text-gray-700'>
+                    {chapter.title}
+                  </td>
+                  <td className='px-4 py-2 text-sm text-gray-700'>
+                    {chapter.studyType}
+                  </td>
+                  <td className='px-4 py-2 text-sm text-gray-700'>
+                    {chapter.status}
+                  </td>
+                  <td className='px-4 py-2 text-sm'>
+                    <Link href={`/dashboard/chapters/${chapter.id}/edit`}>
+                      <Button variant='outline' size='sm'>
+                        Ver / Editar
+                      </Button>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
