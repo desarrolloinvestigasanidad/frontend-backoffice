@@ -20,12 +20,12 @@ const navItems = [
     icon: <BookOpen size={18} />,
   },
   {
-    label: "Libros Propios",
+    label: "Libros",
     href: "/dashboard/books",
     icon: <FileText size={18} />,
   },
   {
-    label: "Capítulos Propios",
+    label: "Capítulos",
     href: "/dashboard/chapters",
     icon: <Layers size={18} />,
   },

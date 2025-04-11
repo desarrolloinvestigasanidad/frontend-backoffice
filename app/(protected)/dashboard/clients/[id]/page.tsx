@@ -5,10 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { Edit, Save, X, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Tipos de datos
 type Client = {
   id: string;
   firstName: string;
@@ -32,14 +32,8 @@ type Payment = {
 type Book = {
   id: string;
   title: string;
-  subtitle?: string;
   price: number;
-  isbn?: string;
-  cover?: string;
-  openDate?: string;
-  deadlineChapters?: string;
   publishDate?: string;
-  interests?: string;
   bookType: string;
   status: string;
   active: boolean;
@@ -49,38 +43,19 @@ type Chapter = {
   id: string;
   title: string;
   status?: string;
-  // Otras propiedades si es necesario
 };
-
-// Tipo de datos para Edición
-type Edition = {
-  id: string;
-  title: string;
-  // Puedes agregar otras propiedades según lo requieras
-};
-
-// Extender Book para asociar la edición correspondiente
-type EditionBook = Book & { editionId: string };
 
 export default function ClientDetailPage() {
   const router = useRouter();
   const { id } = useParams();
-
-  // Estados del cliente y sus datos
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Client>>({});
   const [message, setMessage] = useState("");
-
   const [payments, setPayments] = useState<Payment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
-
-  // Estados para datos relacionados a ediciones
-  const [editions, setEditions] = useState<Edition[]>([]);
-  const [editionBooks, setEditionBooks] = useState<EditionBook[]>([]);
-  const [editionChapters, setEditionChapters] = useState<Chapter[]>([]);
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -89,7 +64,9 @@ export default function ClientDetailPage() {
         const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         const data = await res.json();
         setClient(data);
@@ -102,7 +79,7 @@ export default function ClientDetailPage() {
     if (id) fetchClient();
   }, [id]);
 
-  // Cargar pagos una vez que se obtuvo el cliente
+  // Cargar pagos
   useEffect(() => {
     const fetchPayments = async () => {
       if (!id) return;
@@ -110,7 +87,9 @@ export default function ClientDetailPage() {
         const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/payments/?userId=${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         const paymentsData = await res.json();
         const paymentsArray = Array.isArray(paymentsData)
@@ -124,7 +103,7 @@ export default function ClientDetailPage() {
     if (client) fetchPayments();
   }, [id, client]);
 
-  // Cargar libros del cliente (libros propios) usando query param userId
+  // Cargar libros
   useEffect(() => {
     const fetchBooks = async () => {
       if (!id) return;
@@ -132,7 +111,9 @@ export default function ClientDetailPage() {
         const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/books?userId=${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         const data = await res.json();
         setBooks(Array.isArray(data) ? data : []);
@@ -143,7 +124,7 @@ export default function ClientDetailPage() {
     fetchBooks();
   }, [id]);
 
-  // Cargar capítulos del cliente (capítulos propios)
+  // Cargar capítulos
   useEffect(() => {
     const fetchChapters = async () => {
       if (!id) return;
@@ -151,7 +132,9 @@ export default function ClientDetailPage() {
         const token = sessionStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?userId=${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         const data = await res.json();
         setChapters(Array.isArray(data) ? data : []);
@@ -162,86 +145,7 @@ export default function ClientDetailPage() {
     fetchChapters();
   }, [id]);
 
-  // -----------------------------------------
-  // Integrar endpoints de ediciones, libros y capítulos pertenecientes a ediciones
-  // -----------------------------------------
-
-  // 1. Obtener Ediciones
-  useEffect(() => {
-    const fetchEditions = async () => {
-      try {
-        const token = sessionStorage.getItem("token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/editions`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const data = await res.json();
-        setEditions(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error al cargar ediciones:", error);
-      }
-    };
-    fetchEditions();
-  }, []);
-
-  // 2. Obtener libros para cada edición y asociar el id de la edición a cada libro
-  useEffect(() => {
-    const fetchEditionBooks = async () => {
-      if (editions.length === 0) return;
-      try {
-        const token = sessionStorage.getItem("token");
-        const booksPromises = editions.map(async (edition) => {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${edition.id}/books`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const booksData = await res.json();
-          // Asegurarse de que es un arreglo y asociamos la edición a cada libro
-          if (Array.isArray(booksData)) {
-            return booksData.map((book: Book) => ({
-              ...book,
-              editionId: edition.id,
-            }));
-          }
-          return [];
-        });
-        const booksNested = await Promise.all(booksPromises);
-        const booksFlat = booksNested.flat();
-        setEditionBooks(booksFlat);
-      } catch (error) {
-        console.error("Error al cargar libros de ediciones:", error);
-      }
-    };
-    fetchEditionBooks();
-  }, [editions]);
-
-  // 3. Obtener capítulos para cada libro dentro de las ediciones
-  useEffect(() => {
-    const fetchEditionChapters = async () => {
-      if (editionBooks.length === 0) return;
-      try {
-        const token = sessionStorage.getItem("token");
-        const chaptersPromises = editionBooks.map(async (book) => {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${book.editionId}/books/${book.id}/chapters`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const chaptersData = await res.json();
-          return Array.isArray(chaptersData) ? chaptersData : [];
-        });
-        const chaptersNested = await Promise.all(chaptersPromises);
-        const chaptersFlat = chaptersNested.flat();
-        setEditionChapters(chaptersFlat);
-      } catch (error) {
-        console.error("Error al cargar capítulos de ediciones:", error);
-      }
-    };
-    fetchEditionChapters();
-  }, [editionBooks]);
-
-  // -----------------------------------------
-  // Funciones para editar, guardar, eliminar, e impersonar
-  // -----------------------------------------
+  // Funciones de edición, guardado, eliminación e impersonación
   const handleEdit = () => {
     if (client) {
       setEditData({
@@ -311,13 +215,14 @@ export default function ClientDetailPage() {
     }
   };
 
-  // Función para que el admin se "impersonifique" al cliente
   const handleImpersonate = async () => {
     try {
       const token = sessionStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}/impersonate`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       if (!res.ok) {
         const errorData = await res.json();
@@ -332,22 +237,33 @@ export default function ClientDetailPage() {
   };
 
   if (loading) {
-    return <div>Cargando datos del cliente...</div>;
+    return (
+      <div className='flex items-center justify-center h-64'>
+        Cargando datos del cliente...
+      </div>
+    );
   }
 
   if (!client) {
-    return <div>No se encontró el cliente.</div>;
+    return <div className='text-center'>No se encontró el cliente.</div>;
   }
 
   return (
     <div className='relative overflow-hidden py-8'>
-      <div className='container mx-auto px-4 relative z-10'>
+      {/* Fondo degradado */}
+      <div className='absolute inset-0 z-0'>
+        <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
+      </div>
+
+      <div className='container mx-auto px-4 relative z-10 space-y-8'>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className='mb-6 flex items-center justify-between'>
-          <h1 className='text-2xl font-bold'>Detalle del Cliente</h1>
+          className='flex items-center justify-between'>
+          <Breadcrumb>
+            <span>Detalle del Cliente</span>
+          </Breadcrumb>
           <div className='flex gap-2'>
             <Button
               onClick={handleImpersonate}
@@ -357,8 +273,8 @@ export default function ClientDetailPage() {
             {!editing && (
               <Button
                 onClick={handleEdit}
-                className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
-                <Edit className='mr-2 h-4 w-4' /> Editar
+                className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 flex items-center gap-1'>
+                <Edit className='h-4 w-4' /> Editar
               </Button>
             )}
             <Button variant='destructive' onClick={handleDelete}>
@@ -375,10 +291,10 @@ export default function ClientDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50'>
-          <div className='flex flex-col md:flex-row items-center md:items-start gap-8'>
+          <div className='flex flex-col md:flex-row items-center gap-8'>
             {/* Avatar */}
             <div className='flex flex-col items-center'>
-              <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-lg'>
+              <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg'>
                 {client.firstName.charAt(0)}
                 {client.lastName.charAt(0)}
               </div>
@@ -451,7 +367,6 @@ export default function ClientDetailPage() {
                     </p>
                   )}
                 </div>
-
                 <div>
                   <Label>Ubicación</Label>
                   {editing ? (
@@ -492,11 +407,11 @@ export default function ClientDetailPage() {
                 <div className='flex gap-3 mt-8'>
                   <Button
                     onClick={handleSave}
-                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
-                    <Save className='mr-2 h-4 w-4' /> Guardar Cambios
+                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 flex items-center gap-1'>
+                    <Save className='h-4 w-4' /> Guardar Cambios
                   </Button>
                   <Button variant='outline' onClick={() => setEditing(false)}>
-                    <X className='mr-2 h-4 w-4' /> Cancelar
+                    <X className='h-4 w-4' /> Cancelar
                   </Button>
                 </div>
               )}
@@ -537,13 +452,13 @@ export default function ClientDetailPage() {
           )}
         </motion.div>
 
-        {/* Sección de Libros Propios */}
+        {/* Sección de Libros */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Mis Libros</h2>
+          <h2 className='text-xl font-semibold mb-4'>Libros Propios</h2>
           {books.length === 0 ? (
             <p>No se encontraron libros.</p>
           ) : (
@@ -574,13 +489,13 @@ export default function ClientDetailPage() {
           )}
         </motion.div>
 
-        {/* Sección de Capítulos Propios */}
+        {/* Sección de Capítulos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
           className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Mis Capítulos</h2>
+          <h2 className='text-xl font-semibold mb-4'>Capítulos Propios</h2>
           {chapters.length === 0 ? (
             <p>No se encontraron capítulos.</p>
           ) : (
@@ -594,72 +509,6 @@ export default function ClientDetailPage() {
               </thead>
               <tbody>
                 {chapters.map((chapter) => (
-                  <tr key={chapter.id} className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{chapter.id}</td>
-                    <td className='border px-4 py-2'>{chapter.title}</td>
-                    <td className='border px-4 py-2'>
-                      {chapter.status || "N/A"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </motion.div>
-
-        {/* Sección de Libros en Ediciones */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Libros en Ediciones</h2>
-          {editionBooks.length === 0 ? (
-            <p>No se encontraron libros en ediciones.</p>
-          ) : (
-            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-              <thead className='bg-purple-100'>
-                <tr>
-                  <th className='px-4 py-2'>ID</th>
-                  <th className='px-4 py-2'>Título</th>
-                  <th className='px-4 py-2'>Edición ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {editionBooks.map((book) => (
-                  <tr
-                    key={`${book.editionId}-${book.id}`}
-                    className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{book.id}</td>
-                    <td className='border px-4 py-2'>{book.title}</td>
-                    <td className='border px-4 py-2'>{book.editionId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </motion.div>
-
-        {/* Sección de Capítulos en Ediciones */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Capítulos en Ediciones</h2>
-          {editionChapters.length === 0 ? (
-            <p>No se encontraron capítulos en ediciones.</p>
-          ) : (
-            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-              <thead className='bg-purple-100'>
-                <tr>
-                  <th className='px-4 py-2'>ID</th>
-                  <th className='px-4 py-2'>Título</th>
-                  <th className='px-4 py-2'>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {editionChapters.map((chapter) => (
                   <tr key={chapter.id} className='hover:bg-gray-50'>
                     <td className='border px-4 py-2'>{chapter.id}</td>
                     <td className='border px-4 py-2'>{chapter.title}</td>
