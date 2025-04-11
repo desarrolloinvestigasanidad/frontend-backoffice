@@ -66,7 +66,7 @@ export default function PaymentsPage() {
     const fetchClients = async () => {
       try {
         const token = sessionStorage.getItem("token");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/clients`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
