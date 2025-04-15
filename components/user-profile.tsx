@@ -48,7 +48,7 @@ export default function UserProfile() {
           href='/publications'
           className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
           <BookOpen className='h-8 w-8' />
-          <span className='text-sm mt-1'>Mis Publicaciones</span>
+          <span className='text-sm mt-1'>Mis Libros Personalizados</span>
         </Link>
 
         {/* Opción: "Biblioteca" */}

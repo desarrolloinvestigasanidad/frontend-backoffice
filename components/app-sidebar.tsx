@@ -40,7 +40,11 @@ export function AppSidebar() {
     { title: "Dashboard", icon: Home, href: "/dashboard" },
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
-    { title: "Mis Publicaciones", icon: BookOpen, href: "/publications" },
+    {
+      title: "Mis Libros Personalizados",
+      icon: BookOpen,
+      href: "/publications",
+    },
     { title: "Biblioteca", icon: Library, href: "/library" },
     { title: "Crear Libro", icon: Plus, href: "/create-book" },
   ];
