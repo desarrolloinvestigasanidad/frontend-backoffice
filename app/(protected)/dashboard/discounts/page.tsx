@@ -375,7 +375,9 @@ export default function DiscountsPage() {
           </div>
 
           <div className='flex items-center space-x-2'>
-            <label className='block font-medium'>Aplica a libro propio</label>
+            <label className='block font-medium'>
+              Aplica a libro personalziado
+            </label>
             <input
               type='checkbox'
               name='applyToOwnBook'

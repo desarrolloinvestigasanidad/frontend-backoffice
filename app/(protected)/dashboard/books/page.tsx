@@ -46,19 +46,19 @@ export default function BooksPage() {
     fetchBooks();
   }, []);
 
-  if (loading) return <div>Cargando libros propios...</div>;
+  if (loading) return <div>Cargando libros perzonalizados...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <section className='max-w-4xl mx-auto p-6 space-y-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>Libros Propios</h1>
+        <h1 className='text-2xl font-bold'>Libros Personalizados</h1>
         <Link href='/dashboard/books/new'>
-          <Button>Crear Libro Propio</Button>
+          <Button>Crear Libro Personalizado</Button>
         </Link>
       </div>
       {books.length === 0 ? (
-        <p>No hay libros propios registrados.</p>
+        <p>No hay libros personalizados registrados.</p>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {books.map((book) => (

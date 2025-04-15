@@ -39,7 +39,7 @@ export default function Hero() {
               <Button
                 size='lg'
                 className='bg-white text-gray-900 hover:bg-white/10 hover:text-white transition-colors border-2 border-primary'>
-                Publica Tu Propio Libro
+                Publica Tu Libro Personalizado
               </Button>
             </div>
 

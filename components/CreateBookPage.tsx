@@ -32,7 +32,9 @@ export default function CreateBookPage() {
         <>
           <div className='flex items-center gap-2 text-2xl mb-4'>
             <Book className='h-6 w-6' />
-            <h1 className='font-bold'>Normativa para crear tu propio libro</h1>
+            <h1 className='font-bold'>
+              Normativa para crear tu libro perzonalizado
+            </h1>
           </div>
 
           <div className='grid md:grid-cols-[2fr,1fr] gap-6'>
