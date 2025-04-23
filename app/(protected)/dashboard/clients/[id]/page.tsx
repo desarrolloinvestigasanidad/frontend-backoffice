@@ -454,8 +454,8 @@ export default function ClientDetailPage() {
                 {/* Avatar */}
                 <div className='flex flex-col items-center'>
                   <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg'>
-                    {client.firstName.charAt(0)}
-                    {client.lastName.charAt(0)}
+                    {client.firstName?.[0] ?? ""}
+                    {client.lastName?.[0] ?? ""}
                   </div>
                   <div className='mt-4 text-center'>
                     <Badge
