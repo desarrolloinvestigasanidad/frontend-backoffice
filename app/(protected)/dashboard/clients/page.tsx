@@ -42,7 +42,7 @@ export default function ClientsPage() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/clients`, {
           headers: { Authorization: `Bearer ${token}` },
         });
