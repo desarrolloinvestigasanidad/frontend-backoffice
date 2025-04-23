@@ -62,7 +62,6 @@ export default function LoginPage() {
           return;
         }
 
-        // Guardar token en sessionStorage (solo durante la sesión)
         localStorage.setItem("token", data.token);
         router.replace("/dashboard");
       } else {

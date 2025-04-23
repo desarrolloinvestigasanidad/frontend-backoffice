@@ -77,7 +77,7 @@ export default function ChapterDetailPage() {
   useEffect(() => {
     const fetchEditionDetails = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`,
           {
@@ -96,7 +96,7 @@ export default function ChapterDetailPage() {
 
     const fetchBookDetails = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`,
           {
@@ -115,7 +115,7 @@ export default function ChapterDetailPage() {
 
     const fetchChapter = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}/chapters/${chapterId}`,
           {
@@ -156,7 +156,7 @@ export default function ChapterDetailPage() {
     setSaving(true);
     setMessage("");
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}/chapters/${chapterId}`,
         {
@@ -187,7 +187,7 @@ export default function ChapterDetailPage() {
     if (!confirm("¿Estás seguro de eliminar este capítulo?")) return;
     setDeleting(true);
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}/chapters/${chapterId}`,
         {

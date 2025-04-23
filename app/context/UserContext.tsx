@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api";
 import React, {
   createContext,
   useState,
@@ -52,7 +53,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/profile`,
         {
           method: "GET",
@@ -77,8 +78,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // UserContext.tsx
   useEffect(() => {
-    refreshUser();
+    refreshUser(); // al montar
+    const id = setInterval(refreshUser, 60_000); // cada minuto
+    const onStorage = () => refreshUser(); // cambios desde otras pestañas
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   return (

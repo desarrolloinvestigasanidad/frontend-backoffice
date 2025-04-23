@@ -64,7 +64,7 @@ export default function EditionDetailPage() {
   useEffect(() => {
     const fetchEdition = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`,
           {
@@ -96,7 +96,7 @@ export default function EditionDetailPage() {
     setSaving(true);
     setMessage("");
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`,
         {
@@ -127,7 +127,7 @@ export default function EditionDetailPage() {
     if (!confirm("¿Estás seguro de eliminar esta edición?")) return;
     setDeleting(true);
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`,
         {
