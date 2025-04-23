@@ -96,7 +96,7 @@ export default function ClientDetailPage() {
   useEffect(() => {
     const fetchClient = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}`,
           {
@@ -119,7 +119,7 @@ export default function ClientDetailPage() {
     const fetchPayments = async () => {
       if (!id) return;
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/payments/?userId=${id}`,
           {
@@ -143,7 +143,7 @@ export default function ClientDetailPage() {
     const fetchBooks = async () => {
       if (!id) return;
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/books?userId=${id}`,
           {
@@ -164,7 +164,7 @@ export default function ClientDetailPage() {
     const fetchChapters = async () => {
       if (!id) return;
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?userId=${id}`,
           {
@@ -206,7 +206,7 @@ export default function ClientDetailPage() {
     setMessage("");
     setSavingChanges(true);
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}`,
         {
@@ -240,7 +240,7 @@ export default function ClientDetailPage() {
     if (!confirm("¿Estás seguro de eliminar este cliente?")) return;
     setDeletingClient(true);
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}`,
         {
@@ -263,7 +263,7 @@ export default function ClientDetailPage() {
   const handleImpersonate = async () => {
     setImpersonating(true);
     try {
-      const adminToken = sessionStorage.getItem("token"); // token real del admin
+      const adminToken = localStorage.getItem("token"); // token real del admin
       if (!adminToken) throw new Error("Sesión de administrador no encontrada");
 
       // Llamamos al nuevo endpoint protegido de impersonación
@@ -283,10 +283,10 @@ export default function ClientDetailPage() {
       const { impersonationToken } = await res.json();
 
       // 1) Guardamos el token de admin para poder volver atrás
-      sessionStorage.setItem("adminToken", adminToken);
+      localStorage.setItem("adminToken", adminToken);
 
       // 2) Usamos el token de suplantación
-      sessionStorage.setItem("token", impersonationToken);
+      localStorage.setItem("token", impersonationToken);
 
       // 3) Redirigimos al dominio público de la plataforma
       const base =
