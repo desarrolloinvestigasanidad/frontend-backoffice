@@ -70,8 +70,8 @@ export default function ClientDetailPage() {
         );
         const data = await res.json();
         setClient(data);
-      } catch (error) {
-        console.error("Error al cargar cliente:", error);
+      } catch (err) {
+        console.error("Error al cargar cliente:", err);
       } finally {
         setLoading(false);
       }
@@ -215,24 +215,44 @@ export default function ClientDetailPage() {
     }
   };
 
+  /* -------------------- IMPERSONAR ---------------------- */
   const handleImpersonate = async () => {
     try {
-      const token = sessionStorage.getItem("token");
+      const adminToken = sessionStorage.getItem("token"); // token real del admin
+      if (!adminToken) throw new Error("Sesión de administrador no encontrada");
+
+      // Llamamos al nuevo endpoint protegido de impersonación
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}/impersonate`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/impersonate/${id}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "POST", // ← POST
+          headers: { Authorization: `Bearer ${adminToken}` },
         }
       );
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Error al impersonar cliente");
       }
+
       const { impersonationToken } = await res.json();
+
+      // 1) Guardamos el token de admin para poder volver atrás
+      sessionStorage.setItem("adminToken", adminToken);
+
+      // 2) Usamos el token de suplantación
       sessionStorage.setItem("token", impersonationToken);
-      router.push("/dashboard");
-    } catch (error: any) {
-      alert(error.message);
+
+      // 3) Redirigimos al dominio público de la plataforma
+      const base =
+        process.env.NEXT_PUBLIC_PLATFORM_URL ||
+        "https://main.dh6wi9rwkxpif.amplifyapp.com";
+      const url = `${base}/impersonate?token=${encodeURIComponent(
+        impersonationToken
+      )}`;
+      window.location.href = url; // ← incluye el token como query param // cambio de host
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
