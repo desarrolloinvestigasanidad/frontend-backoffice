@@ -1,13 +1,44 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Edit, Save, X, LogIn } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { BackgroundBlobs } from "@/components/background-blobs";
 import { motion } from "framer-motion";
+import {
+  Edit,
+  Save,
+  X,
+  LogIn,
+  ChevronLeft,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  CreditCard,
+  Calendar,
+  BookOpen,
+  FileText,
+  Trash2,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 
 type Client = {
   id: string;
@@ -53,9 +84,13 @@ export default function ClientDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Client>>({});
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [savingChanges, setSavingChanges] = useState(false);
+  const [deletingClient, setDeletingClient] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -169,6 +204,7 @@ export default function ClientDetailPage() {
 
   const handleSave = async () => {
     setMessage("");
+    setSavingChanges(true);
     try {
       const token = sessionStorage.getItem("token");
       const res = await fetch(
@@ -189,13 +225,20 @@ export default function ClientDetailPage() {
       const updated = await res.json();
       setClient(updated);
       setEditing(false);
+      setMessageType("success");
+      setMessage("Cliente actualizado correctamente");
+      setTimeout(() => setMessage(""), 3000);
     } catch (error: any) {
+      setMessageType("error");
       setMessage(error.message);
+    } finally {
+      setSavingChanges(false);
     }
   };
 
   const handleDelete = async () => {
     if (!confirm("¿Estás seguro de eliminar este cliente?")) return;
+    setDeletingClient(true);
     try {
       const token = sessionStorage.getItem("token");
       const res = await fetch(
@@ -212,11 +255,13 @@ export default function ClientDetailPage() {
       router.push("/dashboard/clients");
     } catch (error: any) {
       alert(error.message);
+      setDeletingClient(false);
     }
   };
 
   /* -------------------- IMPERSONAR ---------------------- */
   const handleImpersonate = async () => {
+    setImpersonating(true);
     try {
       const adminToken = sessionStorage.getItem("token"); // token real del admin
       if (!adminToken) throw new Error("Sesión de administrador no encontrada");
@@ -253,293 +298,567 @@ export default function ClientDetailPage() {
       window.location.href = url; // ← incluye el token como query param // cambio de host
     } catch (err: any) {
       alert(err.message);
+      setImpersonating(false);
     }
   };
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        Cargando datos del cliente...
+      <div className='relative overflow-hidden min-h-screen py-8'>
+        <BackgroundBlobs />
+        <div className='container mx-auto px-4 relative z-10'>
+          <div className='flex items-center justify-center h-64'>
+            <div className='relative'>
+              <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+              <div className='absolute inset-0 flex items-center justify-center'>
+                <User className='h-6 w-6 text-purple-500' />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!client) {
-    return <div className='text-center'>No se encontró el cliente.</div>;
+    return (
+      <div className='relative overflow-hidden min-h-screen py-8'>
+        <BackgroundBlobs />
+        <div className='container mx-auto px-4 relative z-10'>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg max-w-md mx-auto'>
+            <CardHeader>
+              <CardTitle>Cliente no encontrado</CardTitle>
+              <CardDescription>
+                No se pudo encontrar la información del cliente solicitado
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className='text-center mb-4'>
+                El cliente que estás buscando no existe o ha sido eliminado.
+              </p>
+              <Button
+                onClick={() => router.push("/dashboard/clients")}
+                className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                <ChevronLeft className='mr-2 h-4 w-4' />
+                Volver a la lista de clientes
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className='relative overflow-hidden py-8'>
-      {/* Fondo degradado */}
-      <div className='absolute inset-0 z-0'>
-        <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
-      </div>
+    <div className='relative overflow-hidden min-h-screen py-8'>
+      <BackgroundBlobs />
 
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className='flex items-center justify-between'>
+          className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
           <Breadcrumb>
-            <span>Detalle del Cliente</span>
+            <Button
+              variant='ghost'
+              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
+              onClick={() => router.push("/dashboard/clients")}>
+              <ChevronLeft className='mr-1 h-4 w-4' />
+              Volver
+            </Button>
+            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+              Detalle del Cliente
+            </span>
           </Breadcrumb>
-          <div className='flex gap-2'>
+          <div className='flex flex-wrap gap-2'>
             <Button
               onClick={handleImpersonate}
-              className='bg-green-500 hover:bg-green-600 flex items-center gap-1'>
-              <LogIn className='h-4 w-4' /> Impersonar
+              disabled={impersonating}
+              className='bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'>
+              {impersonating ? (
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              ) : (
+                <LogIn className='mr-2 h-4 w-4' />
+              )}
+              Impersonar
             </Button>
-            {!editing && (
+            {!editing ? (
               <Button
                 onClick={handleEdit}
-                className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 flex items-center gap-1'>
-                <Edit className='h-4 w-4' /> Editar
+                className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                <Edit className='mr-2 h-4 w-4' /> Editar
               </Button>
-            )}
-            <Button variant='destructive' onClick={handleDelete}>
+            ) : null}
+            <Button
+              variant='destructive'
+              onClick={handleDelete}
+              disabled={deletingClient}>
+              {deletingClient ? (
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              ) : (
+                <Trash2 className='mr-2 h-4 w-4' />
+              )}
               Eliminar
-            </Button>
-            <Button variant='outline' onClick={() => router.back()}>
-              Volver
             </Button>
           </div>
         </motion.div>
 
         <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className='text-center mb-8'>
+          <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
+            {client.firstName} {client.lastName}
+          </h2>
+          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
+        </motion.div>
+
+        {message && (
+          <Alert
+            className={`${
+              messageType === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}>
+            {messageType === "success" ? (
+              <CheckCircle className='h-4 w-4 text-green-600' />
+            ) : (
+              <AlertCircle className='h-4 w-4 text-red-600' />
+            )}
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
+
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50'>
-          <div className='flex flex-col md:flex-row items-center gap-8'>
-            {/* Avatar */}
-            <div className='flex flex-col items-center'>
-              <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg'>
-                {client.firstName.charAt(0)}
-                {client.lastName.charAt(0)}
+          transition={{ duration: 0.5, delay: 0.2 }}>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg'>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='bg-purple-100 p-3 rounded-full'>
+                  <User className='h-6 w-6 text-purple-700' />
+                </div>
+                <div>
+                  <CardTitle>Información Personal</CardTitle>
+                  <CardDescription>
+                    Datos personales y de contacto del cliente
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-            {/* Información */}
-            <div className='flex-1 space-y-4'>
-              {message && <p className='text-red-600'>{message}</p>}
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div>
-                  <Label>Email</Label>
-                  {editing ? (
-                    <Input
-                      name='email'
-                      value={editData.email || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>{client.email}</p>
-                  )}
+            </CardHeader>
+            <CardContent>
+              <div className='flex flex-col md:flex-row items-start gap-8'>
+                {/* Avatar */}
+                <div className='flex flex-col items-center'>
+                  <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg'>
+                    {client.firstName.charAt(0)}
+                    {client.lastName.charAt(0)}
+                  </div>
+                  <div className='mt-4 text-center'>
+                    <Badge
+                      variant='outline'
+                      className='bg-purple-50 text-purple-700'>
+                      ID: {client.id}
+                    </Badge>
+                    {client.createdAt && (
+                      <p className='text-xs text-gray-500 mt-2 flex items-center justify-center'>
+                        <Calendar className='h-3 w-3 mr-1' />
+                        Cliente desde{" "}
+                        {new Date(client.createdAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <Label>Teléfono</Label>
-                  {editing ? (
-                    <Input
-                      name='phone'
-                      value={editData.phone || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>
-                      {client.phone || "No especificado"}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label>Nombre</Label>
-                  {editing ? (
-                    <Input
-                      name='firstName'
-                      value={editData.firstName || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>{client.firstName}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>Apellidos</Label>
-                  {editing ? (
-                    <Input
-                      name='lastName'
-                      value={editData.lastName || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>{client.lastName}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>Categoría Profesional</Label>
-                  {editing ? (
-                    <Input
-                      name='professionalCategory'
-                      value={editData.professionalCategory || ""}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p className='font-medium'>
-                      {client.professionalCategory || "No especificado"}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label>Ubicación</Label>
-                  {editing ? (
-                    <div className='flex gap-2'>
-                      <Input
-                        name='country'
-                        value={editData.country || ""}
-                        onChange={handleInputChange}
-                        placeholder='País'
-                      />
-                      <Input
-                        name='autonomousCommunity'
-                        value={editData.autonomousCommunity || ""}
-                        onChange={handleInputChange}
-                        placeholder='Comunidad'
-                      />
-                      <Input
-                        name='province'
-                        value={editData.province || ""}
-                        onChange={handleInputChange}
-                        placeholder='Provincia'
-                      />
+
+                {/* Información */}
+                <div className='flex-1 space-y-6'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <Mail className='h-4 w-4 text-purple-600' />
+                        Email
+                      </Label>
+                      {editing ? (
+                        <Input
+                          name='email'
+                          value={editData.email || ""}
+                          onChange={handleInputChange}
+                          className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                        />
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {client.email}
+                        </p>
+                      )}
                     </div>
-                  ) : (
-                    <p className='font-medium'>
-                      {[
-                        client.province,
-                        client.autonomousCommunity,
-                        client.country,
-                      ]
-                        .filter(Boolean)
-                        .join(", ") || "No especificado"}
-                    </p>
-                  )}
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <Phone className='h-4 w-4 text-purple-600' />
+                        Teléfono
+                      </Label>
+                      {editing ? (
+                        <Input
+                          name='phone'
+                          value={editData.phone || ""}
+                          onChange={handleInputChange}
+                          className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                        />
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {client.phone || "No especificado"}
+                        </p>
+                      )}
+                    </div>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <User className='h-4 w-4 text-purple-600' />
+                        Nombre
+                      </Label>
+                      {editing ? (
+                        <Input
+                          name='firstName'
+                          value={editData.firstName || ""}
+                          onChange={handleInputChange}
+                          className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                        />
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {client.firstName}
+                        </p>
+                      )}
+                    </div>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <User className='h-4 w-4 text-purple-600' />
+                        Apellidos
+                      </Label>
+                      {editing ? (
+                        <Input
+                          name='lastName'
+                          value={editData.lastName || ""}
+                          onChange={handleInputChange}
+                          className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                        />
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {client.lastName}
+                        </p>
+                      )}
+                    </div>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <Briefcase className='h-4 w-4 text-purple-600' />
+                        Categoría Profesional
+                      </Label>
+                      {editing ? (
+                        <Input
+                          name='professionalCategory'
+                          value={editData.professionalCategory || ""}
+                          onChange={handleInputChange}
+                          className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                        />
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {client.professionalCategory || "No especificado"}
+                        </p>
+                      )}
+                    </div>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <MapPin className='h-4 w-4 text-purple-600' />
+                        Ubicación
+                      </Label>
+                      {editing ? (
+                        <div className='grid grid-cols-3 gap-2'>
+                          <Input
+                            name='country'
+                            value={editData.country || ""}
+                            onChange={handleInputChange}
+                            placeholder='País'
+                            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                          />
+                          <Input
+                            name='autonomousCommunity'
+                            value={editData.autonomousCommunity || ""}
+                            onChange={handleInputChange}
+                            placeholder='Comunidad'
+                            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                          />
+                          <Input
+                            name='province'
+                            value={editData.province || ""}
+                            onChange={handleInputChange}
+                            placeholder='Provincia'
+                            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                          />
+                        </div>
+                      ) : (
+                        <p className='font-medium text-gray-900 p-2'>
+                          {[
+                            client.province,
+                            client.autonomousCommunity,
+                            client.country,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "No especificado"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
+
               {editing && (
-                <div className='flex gap-3 mt-8'>
+                <div className='flex gap-3 mt-8 justify-end'>
                   <Button
                     onClick={handleSave}
-                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 flex items-center gap-1'>
-                    <Save className='h-4 w-4' /> Guardar Cambios
+                    disabled={savingChanges}
+                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                    {savingChanges ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />{" "}
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className='mr-2 h-4 w-4' /> Guardar Cambios
+                      </>
+                    )}
                   </Button>
-                  <Button variant='outline' onClick={() => setEditing(false)}>
-                    <X className='h-4 w-4' /> Cancelar
+                  <Button
+                    variant='outline'
+                    onClick={() => setEditing(false)}
+                    className='border-gray-200 text-gray-700 hover:bg-gray-50'>
+                    <X className='mr-2 h-4 w-4' /> Cancelar
                   </Button>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Sección de Pagos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Pagos Realizados</h2>
-          {payments.length === 0 ? (
-            <p>No se encontraron pagos.</p>
-          ) : (
-            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-              <thead className='bg-purple-100'>
-                <tr>
-                  <th className='px-4 py-2'>ID</th>
-                  <th className='px-4 py-2'>Monto</th>
-                  <th className='px-4 py-2'>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id} className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{p.id}</td>
-                    <td className='border px-4 py-2'>{p.amount}</td>
-                    <td className='border px-4 py-2'>
-                      {new Date(p.date).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          transition={{ duration: 0.5, delay: 0.3 }}>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg'>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='bg-green-100 p-3 rounded-full'>
+                  <CreditCard className='h-6 w-6 text-green-700' />
+                </div>
+                <div>
+                  <CardTitle>Pagos Realizados</CardTitle>
+                  <CardDescription>
+                    Historial de transacciones del cliente
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {payments.length === 0 ? (
+                <div className='text-center py-8'>
+                  <CreditCard className='h-12 w-12 text-gray-300 mx-auto mb-3' />
+                  <p className='text-gray-500'>
+                    No se encontraron pagos para este cliente.
+                  </p>
+                </div>
+              ) : (
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-green-50 text-green-900'>
+                      <tr>
+                        <th className='px-4 py-3 text-left'>ID</th>
+                        <th className='px-4 py-3 text-left'>Monto</th>
+                        <th className='px-4 py-3 text-left'>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100'>
+                      {payments.map((p) => (
+                        <tr
+                          key={p.id}
+                          className='hover:bg-green-50/50 transition-colors'>
+                          <td className='px-4 py-3'>
+                            <Badge
+                              variant='outline'
+                              className='bg-green-50 text-green-700'>
+                              {p.id}
+                            </Badge>
+                          </td>
+                          <td className='px-4 py-3 font-medium'>{p.amount}€</td>
+                          <td className='px-4 py-3 flex items-center'>
+                            <Calendar className='h-3 w-3 mr-2 text-gray-400' />
+                            {new Date(p.date).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Sección de Libros */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Libros Propios</h2>
-          {books.length === 0 ? (
-            <p>No se encontraron libros.</p>
-          ) : (
-            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-              <thead className='bg-purple-100'>
-                <tr>
-                  <th className='px-4 py-2'>ID</th>
-                  <th className='px-4 py-2'>Título</th>
-                  <th className='px-4 py-2'>Precio</th>
-                  <th className='px-4 py-2'>Publicación</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book.id} className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{book.id}</td>
-                    <td className='border px-4 py-2'>{book.title}</td>
-                    <td className='border px-4 py-2'>{book.price}</td>
-                    <td className='border px-4 py-2'>
-                      {book.publishDate
-                        ? new Date(book.publishDate).toLocaleDateString()
-                        : "N/A"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          transition={{ duration: 0.5, delay: 0.4 }}>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg'>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='bg-blue-100 p-3 rounded-full'>
+                  <BookOpen className='h-6 w-6 text-blue-700' />
+                </div>
+                <div>
+                  <CardTitle>Libros Propios</CardTitle>
+                  <CardDescription>
+                    Libros publicados por el cliente
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {books.length === 0 ? (
+                <div className='text-center py-8'>
+                  <BookOpen className='h-12 w-12 text-gray-300 mx-auto mb-3' />
+                  <p className='text-gray-500'>
+                    No se encontraron libros para este cliente.
+                  </p>
+                </div>
+              ) : (
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-blue-50 text-blue-900'>
+                      <tr>
+                        <th className='px-4 py-3 text-left'>ID</th>
+                        <th className='px-4 py-3 text-left'>Título</th>
+                        <th className='px-4 py-3 text-left'>Precio</th>
+                        <th className='px-4 py-3 text-left'>Publicación</th>
+                        <th className='px-4 py-3 text-left'>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100'>
+                      {books.map((book) => (
+                        <tr
+                          key={book.id}
+                          className='hover:bg-blue-50/50 transition-colors'>
+                          <td className='px-4 py-3'>
+                            <Badge
+                              variant='outline'
+                              className='bg-blue-50 text-blue-700'>
+                              {book.id}
+                            </Badge>
+                          </td>
+                          <td className='px-4 py-3 font-medium'>
+                            {book.title}
+                          </td>
+                          <td className='px-4 py-3'>{book.price}€</td>
+                          <td className='px-4 py-3 flex items-center'>
+                            <Calendar className='h-3 w-3 mr-2 text-gray-400' />
+                            {book.publishDate
+                              ? new Date(book.publishDate).toLocaleDateString()
+                              : "N/A"}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <Badge
+                              variant={
+                                book.status === "published"
+                                  ? "default"
+                                  : book.status === "draft"
+                                  ? "secondary"
+                                  : "outline"
+                              }>
+                              {book.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Sección de Capítulos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className='mt-8 backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-lg border border-white/50'>
-          <h2 className='text-xl font-semibold mb-4'>Capítulos Propios</h2>
-          {chapters.length === 0 ? (
-            <p>No se encontraron capítulos.</p>
-          ) : (
-            <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-              <thead className='bg-purple-100'>
-                <tr>
-                  <th className='px-4 py-2'>ID</th>
-                  <th className='px-4 py-2'>Título</th>
-                  <th className='px-4 py-2'>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chapters.map((chapter) => (
-                  <tr key={chapter.id} className='hover:bg-gray-50'>
-                    <td className='border px-4 py-2'>{chapter.id}</td>
-                    <td className='border px-4 py-2'>{chapter.title}</td>
-                    <td className='border px-4 py-2'>
-                      {chapter.status || "N/A"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          transition={{ duration: 0.5, delay: 0.5 }}>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg'>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='bg-yellow-100 p-3 rounded-full'>
+                  <FileText className='h-6 w-6 text-yellow-700' />
+                </div>
+                <div>
+                  <CardTitle>Capítulos Propios</CardTitle>
+                  <CardDescription>
+                    Capítulos escritos por el cliente
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {chapters.length === 0 ? (
+                <div className='text-center py-8'>
+                  <FileText className='h-12 w-12 text-gray-300 mx-auto mb-3' />
+                  <p className='text-gray-500'>
+                    No se encontraron capítulos para este cliente.
+                  </p>
+                </div>
+              ) : (
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-yellow-50 text-yellow-900'>
+                      <tr>
+                        <th className='px-4 py-3 text-left'>ID</th>
+                        <th className='px-4 py-3 text-left'>Título</th>
+                        <th className='px-4 py-3 text-left'>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100'>
+                      {chapters.map((chapter) => (
+                        <tr
+                          key={chapter.id}
+                          className='hover:bg-yellow-50/50 transition-colors'>
+                          <td className='px-4 py-3'>
+                            <Badge
+                              variant='outline'
+                              className='bg-yellow-50 text-yellow-700'>
+                              {chapter.id}
+                            </Badge>
+                          </td>
+                          <td className='px-4 py-3 font-medium'>
+                            {chapter.title}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <Badge
+                              variant={
+                                chapter.status === "published"
+                                  ? "default"
+                                  : chapter.status === "draft"
+                                  ? "secondary"
+                                  : "outline"
+                              }>
+                              {chapter.status || "N/A"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>

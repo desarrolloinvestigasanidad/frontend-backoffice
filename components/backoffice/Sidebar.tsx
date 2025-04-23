@@ -1,7 +1,3 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Users,
   BookOpen,
@@ -10,20 +6,23 @@ import {
   Tag,
   Settings,
   Layers,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 
 const navItems = [
+  {
+    label: "Panel de Control",
+    href: "/dashboard",
+    icon: <LayoutDashboard size={18} />,
+  },
   { label: "Clientes", href: "/dashboard/clients", icon: <Users size={18} /> },
   {
     label: "Ediciones",
     href: "/dashboard/editions",
     icon: <BookOpen size={18} />,
   },
-  {
-    label: "Libros",
-    href: "/dashboard/books",
-    icon: <FileText size={18} />,
-  },
+  { label: "Libros", href: "/dashboard/books", icon: <FileText size={18} /> },
   {
     label: "Capítulos",
     href: "/dashboard/chapters",
@@ -58,35 +57,34 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
-  const pathname = usePathname();
-
+const Sidebar = () => {
   return (
-    <aside className='w-64 bg-white border-r border-gray-200 p-4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold text-purple-700'>
-          Investiga Sanidad <br />
-          Backoffice
-        </h1>
-      </div>
+    <div className='w-64 bg-gray-100 h-screen p-4'>
+      <h1 className='text-2xl font-bold mb-4'>Panel de Administración</h1>
       <nav>
-        <ul className='space-y-2'>
+        <ul>
           {navItems.map((item) => (
-            <li key={item.href}>
-              <Link
+            <li key={item.label} className='mb-2'>
+              <a
                 href={item.href}
-                className={`flex items-center p-2 rounded-md transition-colors ${
-                  pathname === item.href
-                    ? "bg-purple-100 font-semibold text-purple-700"
-                    : "hover:bg-purple-50"
-                }`}>
-                <span className='mr-2'>{item.icon}</span>
-                {item.label}
-              </Link>
+                className='flex items-center text-gray-700 hover:text-blue-500'>
+                {item.icon}
+                <span className='ml-2'>{item.label}</span>
+              </a>
             </li>
           ))}
+          <li className='mt-4'>
+            <a
+              href='/'
+              className='flex items-center text-gray-700 hover:text-blue-500'>
+              <LogOut size={18} />
+              <span className='ml-2'>Cerrar Sesión</span>
+            </a>
+          </li>
         </ul>
       </nav>
-    </aside>
+    </div>
   );
-}
+};
+
+export default Sidebar;

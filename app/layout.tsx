@@ -1,4 +1,5 @@
 // app/layout.tsx
+import { UserProvider } from "./context/UserContext";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang='es'>
       <body>
         <ThemeProvider attribute='class' defaultTheme='light'>
-          <main>{children}</main>
+          <main>
+            <UserProvider>{children}</UserProvider>
+          </main>
         </ThemeProvider>
       </body>
     </html>

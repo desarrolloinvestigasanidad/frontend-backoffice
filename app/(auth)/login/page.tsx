@@ -63,7 +63,7 @@ export default function LoginPage() {
         }
 
         // Guardar token en sessionStorage (solo durante la sesión)
-        sessionStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.token);
         router.replace("/dashboard");
       } else {
         setMessage(data.message || "Error al iniciar sesión.");
