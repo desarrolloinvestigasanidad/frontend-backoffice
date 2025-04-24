@@ -29,7 +29,7 @@ export default function RolesPage() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/roles`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -70,7 +70,7 @@ export default function RolesPage() {
     }
 
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       let res;
       if (editingRole) {
         // Actualización: se usa PUT al endpoint /roles/:id

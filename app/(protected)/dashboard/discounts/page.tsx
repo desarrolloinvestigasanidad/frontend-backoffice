@@ -54,7 +54,7 @@ export default function DiscountsPage() {
   // Cargar descuentos
   const fetchDiscounts = async () => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/discounts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -93,7 +93,7 @@ export default function DiscountsPage() {
     e.preventDefault();
     setMessage("");
 
-    const token = sessionStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     // Prepara payload con conversión de ciertos campos a número o null
     const payload = {

@@ -55,7 +55,7 @@ export default function NewClientPage() {
     setSuccess(false);
 
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/clients`, {
         method: "POST",
         headers: {

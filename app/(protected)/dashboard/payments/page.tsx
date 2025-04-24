@@ -85,7 +85,7 @@ export default function PaymentsPage() {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/payments`,
           {
@@ -576,14 +576,14 @@ export default function PaymentsPage() {
                               onMouseLeave={() =>
                                 handleMouseLeave(`view-${payment.id}`)
                               }>
-                              {/* <motion.span
+                              <motion.span
                                 className='flex items-center'
                                 animate={{
                                   x: hoverStates[`view-${payment.id}`] ? 2 : 0,
                                 }}
                                 transition={{ duration: 0.2 }}>
                                 <DollarSign className='mr-1 h-4 w-4' /> Detalles
-                              </motion.span> */}
+                              </motion.span>
                             </Button>
                           </Link>
                         </div>
@@ -698,14 +698,14 @@ export default function PaymentsPage() {
                                 <Download className='mr-1 h-4 w-4' /> Factura
                               </Button>
                             )}
-                            {/* <Link href={`/dashboard/payments/${payment.id}`}>
+                            <Link href={`/dashboard/payments/${payment.id}`}>
                               <Button
                                 variant='outline'
                                 size='sm'
                                 className='border-purple-200 text-purple-700 hover:bg-purple-50'>
                                 <DollarSign className='mr-1 h-4 w-4' /> Detalles
                               </Button>
-                            </Link> */}
+                            </Link>
                           </div>
                         </td>
                       </tr>

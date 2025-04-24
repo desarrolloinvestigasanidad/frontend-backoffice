@@ -73,7 +73,7 @@ export default function BooksPage() {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/books`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -93,7 +93,7 @@ export default function BooksPage() {
 
     const fetchEditions = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions`,
           {

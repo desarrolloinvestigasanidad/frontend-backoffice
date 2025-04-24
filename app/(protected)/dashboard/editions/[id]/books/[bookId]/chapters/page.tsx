@@ -58,7 +58,7 @@ export default function ChaptersListPage() {
   useEffect(() => {
     const fetchEditionDetails = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`,
           {
@@ -77,7 +77,7 @@ export default function ChaptersListPage() {
 
     const fetchBookDetails = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`,
           {
@@ -96,7 +96,7 @@ export default function ChaptersListPage() {
 
     const fetchChapters = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}/chapters`,
           {

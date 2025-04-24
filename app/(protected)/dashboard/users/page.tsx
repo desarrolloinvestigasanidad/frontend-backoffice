@@ -63,7 +63,7 @@ export default function UsersStaffPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -90,7 +90,7 @@ export default function UsersStaffPage() {
     setMessage("");
 
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const payload = {
         ...formData,
         // Forzamos que verified y roleId sean staff (1)
@@ -147,7 +147,7 @@ export default function UsersStaffPage() {
   // Función para recargar la lista de usuarios después de cambios
   const fetchUsersList = async () => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const updatedListRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users`,
         { headers: { Authorization: `Bearer ${token}` } }

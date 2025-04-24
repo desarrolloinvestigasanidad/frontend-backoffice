@@ -61,7 +61,7 @@ export default function BooksListPage() {
   useEffect(() => {
     const fetchEditionDetails = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`,
           {
@@ -80,7 +80,7 @@ export default function BooksListPage() {
 
     const fetchBooks = async () => {
       try {
-        const token = sessionStorage.getItem("token");
+        const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books`,
           {

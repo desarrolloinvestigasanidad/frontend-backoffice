@@ -72,7 +72,7 @@ export default function NewEditionPage() {
     setIsLoading(true);
     setMessage("");
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`, {
         method: "POST",
         headers: {

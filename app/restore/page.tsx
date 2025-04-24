@@ -8,7 +8,7 @@ export default function RestoreAdminSession() {
   const router = useRouter();
 
   useEffect(() => {
-    const adminToken = sessionStorage.getItem("adminToken");
+    const adminToken = localStorage.getItem("adminToken");
     if (adminToken) {
       localStorage.setItem("token", adminToken); // volvemos a ser admin
       localStorage.removeItem("adminToken");

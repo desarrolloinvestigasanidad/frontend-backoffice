@@ -36,7 +36,7 @@ export default function NewBookPage() {
     setSaving(true);
     setMessage("");
     try {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token");
       const payload = {
         ...formData,
         editionId,
