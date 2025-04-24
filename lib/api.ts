@@ -4,26 +4,41 @@ import { logout } from "./auth";
 
 /**
  * Igual que fetch() pero:
- *  • añade el token en la cabecera Authorization
- *  • si recibe 401 -> hace logout() y aborta
+ *  • añade el token en la cabecera Authorization solo si existe
+ *  • intercepta 401 -> hace logout() y lanza excepción
  */
-export async function apiFetch(input: RequestInfo | URL, init?: RequestInit) {
-  // --- 1. Añadir token automáticamente ---------------
-  const token = localStorage.getItem("token");
+export async function apiFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+) {
+  // 1. Construir headers base
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    // respetar cualquier header pasado en init
+    ...(init.headers as Record<string, string>),
+  };
 
+  // 2. Añadir token si lo hay
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // 3. Llamada a fetch con headers completos
   const res = await fetch(input, {
     ...init,
-    headers: {
-      ...(init?.headers || {}),
-      Authorization: token ? `Bearer ${token}` : "",
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
-  // --- 2. Interceptar 401 --------------------------------
+  // 4. Si recibimos 401, limpiar y redirigir
   if (res.status === 401) {
-    logout(); // borra token y manda a /login
-    return Promise.reject(new Error("No autorizado"));
+    // borra credenciales
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    // redirige a login
+    logout();
+    // abortar flujo lanzando error
+    throw new Error("No autorizado");
   }
 
   return res;
