@@ -3,20 +3,20 @@ import { ChevronRight, MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Breadcrumb = React.forwardRef<
-  HTMLElement,
-  React.HTMLAttributes<HTMLElement>
->(({ className, ...props }, ref) => (
-  <nav
-    ref={ref}
-    aria-label='breadcrumb'
-    className={cn(
-      "flex flex-wrap items-center text-sm text-muted-foreground",
-      className
-    )}
-    {...props}
-  />
-));
+export interface BreadcrumbProps {
+  items: { label: string; href: string }[];
+}
+export function Breadcrumb({ items }: BreadcrumbProps) {
+  return (
+    <nav>
+      {items.map((item, index) => (
+        <a key={index} href={item.href}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
 Breadcrumb.displayName = "Breadcrumb";
 
 const BreadcrumbList = React.forwardRef<
@@ -102,7 +102,6 @@ const BreadcrumbEllipsis = ({
 BreadcrumbEllipsis.displayName = "BreadcrumbEllipsis";
 
 export {
-  Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,

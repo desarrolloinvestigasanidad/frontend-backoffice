@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CertificateData } from "@/types/certificate";
 import { QRCodeSVG } from "qrcode.react";
+import { motion } from "framer-motion";
 
 interface CertificatePreviewProps {
   data: CertificateData;
@@ -31,28 +32,43 @@ export function CertificatePreview({ data }: CertificatePreviewProps) {
   }, [data]);
 
   return (
-    <div className='relative w-full h-full flex flex-col'>
+    <div className='relative w-full h-full flex flex-col p-4 font-serif'>
       {/* Header */}
-      <div className='text-center mb-4'>
+      <div className='text-center mb-6'>
         {data.headerImage && (
-          <img
+          <motion.img
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             src={(data.headerImage as string) || "/placeholder.svg"}
             alt='Cabecera'
-            className='max-h-20 mx-auto mb-2'
+            className='max-h-20 mx-auto mb-4'
           />
         )}
         {data.logo && (
-          <img
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             src={(data.logo as string) || "/placeholder.svg"}
             alt='Logo'
-            className='max-h-16 mx-auto mb-2'
+            className='max-h-16 mx-auto mb-4'
           />
         )}
-        <h1 className='text-2xl font-bold'>{data.title || "CERTIFICADO"}</h1>
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className='text-2xl font-bold'>
+          {data.title || "CERTIFICADO"}
+        </motion.h1>
       </div>
 
       {/* Content */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
         className='flex-grow text-center px-8 py-4'
         dangerouslySetInnerHTML={{ __html: certificateContent }}
       />
@@ -100,7 +116,9 @@ function generateChapterCertificate(data: CertificateData): string {
     
     <p class="text-xl font-semibold mb-4">${authors}</p>
     
-    <p class="mb-4">Es autor/a del capítulo titulado:</p>
+    <p class="mb-4">Es autor/a del capítulo ${
+      data.chapterNumber ? `Nº ${data.chapterNumber}` : ""
+    } titulado:</p>
     
     <p class="text-lg font-semibold mb-4">"${data.chapterTitle}"</p>
     
@@ -113,6 +131,8 @@ function generateChapterCertificate(data: CertificateData): string {
     <p class="mt-4">ISBN: ${data.isbn}</p>
     <p>Páginas: ${data.pages}</p>
     <p>Fecha de publicación: ${formatDate(data.publicationDate)}</p>
+    
+    ${data.customText ? `<p class="mt-4">${data.customText}</p>` : ""}
   `;
 }
 
@@ -137,6 +157,8 @@ function generateBookCertificate(data: CertificateData): string {
     <p class="mt-4">ISBN: ${data.isbn}</p>
     <p>Total de páginas: ${data.totalPages}</p>
     <p>Fecha de publicación: ${formatDate(data.publicationDate)}</p>
+    
+    ${data.customText ? `<p class="mt-4">${data.customText}</p>` : ""}
   `;
 }
 
@@ -179,6 +201,8 @@ function generateRegionalCertificate(data: CertificateData): string {
     <p class="mt-6 font-semibold">Este certificado es válido para la Comunidad Autónoma de ${
       data.region
     }</p>
+    
+    ${data.customText ? `<p class="mt-4">${data.customText}</p>` : ""}
   `;
 }
 
