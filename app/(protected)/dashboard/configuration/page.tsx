@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ConfiguracionGeneral } from "@/components/configuration/configuracion-general";
+
 import { ConfiguracionISBN } from "@/components/configuration/configuracion-isbn";
 import { ConfiguracionPortadas } from "@/components/configuration/configuracion-portadas";
 import { ConfiguracionPagos } from "@/components/configuration/configuracion-pagos";
@@ -25,7 +25,6 @@ export default function ConfiguracionPage() {
 
       <Tabs defaultValue='general' className='w-full'>
         <TabsList className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 mb-8'>
-          <TabsTrigger value='general'>General</TabsTrigger>
           <TabsTrigger value='isbn'>ISBN</TabsTrigger>
           <TabsTrigger value='portadas'>Portadas</TabsTrigger>
           <TabsTrigger value='pagos'>Métodos de pago</TabsTrigger>
@@ -41,9 +40,7 @@ export default function ConfiguracionPage() {
             Tipos identificación
           </TabsTrigger>
         </TabsList>
-        <TabsContent value='general'>
-          <ConfiguracionGeneral />
-        </TabsContent>
+
         <TabsContent value='isbn'>
           <ConfiguracionISBN />
         </TabsContent>

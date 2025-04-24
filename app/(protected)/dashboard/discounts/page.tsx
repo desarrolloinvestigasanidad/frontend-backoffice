@@ -350,11 +350,7 @@ export default function DiscountsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Gestión de Descuentos
-            </span>
-          </Breadcrumb>
+          <Breadcrumb items={[{ label: "Gestión de Descuentos", href: "#" }]} />
         </motion.div>
 
         <motion.div

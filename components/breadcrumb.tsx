@@ -1,16 +1,39 @@
+// components/breadcrumb.tsx
+// Componente Breadcrumb con tipado y valor por defecto corregidos.
+// Comentarios en español para mayor claridad.
+
 import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+// ────────────────────────────────────────────────────────────────────────────────
+// Tipos
+// ────────────────────────────────────────────────────────────────────────────────
 export interface BreadcrumbProps {
-  items: { label: string; href: string }[];
+  /**
+   * Lista de elementos para el breadcrumb.
+   * - label: texto a mostrar
+   * - href : URL de destino
+   * Si no se envía, tomará un array vacío por defecto.
+   */
+  items?: { label: string; href: string }[]; // ← prop ahora opcional
 }
-export function Breadcrumb({ items }: BreadcrumbProps) {
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Componente principal
+// ────────────────────────────────────────────────────────────────────────────────
+export function Breadcrumb({ items = [] }: BreadcrumbProps) {
+  // items = [] evita el "cannot read properties of undefined"
+  if (items.length === 0) return null; // opcional: no renders si no hay items
+
   return (
-    <nav>
+    <nav className='flex items-center gap-1.5'>
       {items.map((item, index) => (
-        <a key={index} href={item.href}>
+        <a
+          key={index}
+          href={item.href}
+          className='hover:underline whitespace-nowrap'>
           {item.label}
         </a>
       ))}
@@ -19,6 +42,9 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
 }
 Breadcrumb.displayName = "Breadcrumb";
 
+// ────────────────────────────────────────────────────────────────────────────────
+// Sub-componentes auxiliares (sin cambios funcionales)
+// ────────────────────────────────────────────────────────────────────────────────
 const BreadcrumbList = React.forwardRef<
   HTMLOListElement,
   React.OlHTMLAttributes<HTMLOListElement>
@@ -96,11 +122,14 @@ const BreadcrumbEllipsis = ({
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}>
     <MoreHorizontal className='h-4 w-4' />
-    <span className='sr-only'>More</span>
+    <span className='sr-only'>Más</span>
   </span>
 );
 BreadcrumbEllipsis.displayName = "BreadcrumbEllipsis";
 
+// ────────────────────────────────────────────────────────────────────────────────
+// Exportaciones
+// ────────────────────────────────────────────────────────────────────────────────
 export {
   BreadcrumbList,
   BreadcrumbItem,

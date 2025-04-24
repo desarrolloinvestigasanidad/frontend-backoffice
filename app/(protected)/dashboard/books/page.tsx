@@ -166,11 +166,6 @@ export default function BooksPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Gestión de Libros
-            </span>
-          </Breadcrumb>
           <Link href='/dashboard/books/new'>
             <Button
               className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
