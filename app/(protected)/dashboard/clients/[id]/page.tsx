@@ -38,6 +38,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
+  Key,
 } from "lucide-react";
 
 type Client = {
@@ -91,6 +92,9 @@ export default function ClientDetailPage() {
   const [savingChanges, setSavingChanges] = useState(false);
   const [deletingClient, setDeletingClient] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [pwdMessage, setPwdMessage] = useState("");
+  const [pwdType, setPwdType] = useState<"error" | "success">("success");
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -301,7 +305,38 @@ export default function ClientDetailPage() {
       setImpersonating(false);
     }
   };
-
+  // -------------------- CAMBIAR CONTRASEÑA --------------------
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 8) {
+      setPwdType("error");
+      setPwdMessage("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${id}/password`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ newPassword }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.message || "Error al cambiar contraseña");
+      setPwdType("success");
+      setPwdMessage("Contraseña actualizada correctamente");
+      setNewPassword("");
+      setTimeout(() => setPwdMessage(""), 3000);
+    } catch (err: any) {
+      setPwdType("error");
+      setPwdMessage(err.message);
+    }
+  };
   if (loading) {
     return (
       <div className='relative overflow-hidden min-h-screen py-8'>
@@ -359,7 +394,13 @@ export default function ClientDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
-          <Breadcrumb>
+          <Breadcrumb
+            items={[
+              { label: "Volver", href: "/dashboard/clients" },
+              { label: "Detalle del Cliente", href: "#" },
+            ]}
+          />
+          <div className='flex items-center'>
             <Button
               variant='ghost'
               className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
@@ -370,7 +411,7 @@ export default function ClientDetailPage() {
             <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
               Detalle del Cliente
             </span>
-          </Breadcrumb>
+          </div>
           <div className='flex flex-wrap gap-2'>
             <Button
               onClick={handleImpersonate}
@@ -639,7 +680,65 @@ export default function ClientDetailPage() {
             </CardContent>
           </Card>
         </motion.div>
-
+        {/* Sección Cambiar Contraseña */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}>
+          <Card className='backdrop-blur-sm bg-white/80 border-white/50 shadow-lg'>
+            <CardHeader>
+              <div className='flex items-center gap-3'>
+                <div className='bg-red-100 p-3 rounded-full'>
+                  <Key className='h-6 w-6 text-red-700' />
+                </div>
+                <div>
+                  <CardTitle>Cambiar Contraseña</CardTitle>
+                  <CardDescription>
+                    Establecer nueva contraseña para el cliente
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label className='flex items-center gap-2 text-gray-700'>
+                    <Key className='h-4 w-4 text-red-600' /> Nueva Contraseña
+                  </Label>
+                  <Input
+                    type='password'
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder='Al menos 8 caracteres'
+                    className='border-gray-200 focus:border-red-300 focus:ring-red-200'
+                  />
+                </div>
+                {pwdMessage && (
+                  <Alert
+                    className={`${
+                      pwdType === "success"
+                        ? "bg-green-50 border-green-200 text-green-800"
+                        : "bg-red-50 border-red-200 text-red-800"
+                    }`}>
+                    {pwdType === "success" ? (
+                      <CheckCircle className='h-4 w-4 text-green-600' />
+                    ) : (
+                      <AlertCircle className='h-4 w-4 text-red-600' />
+                    )}
+                    <AlertDescription>{pwdMessage}</AlertDescription>
+                  </Alert>
+                )}
+                <div className='flex justify-end'>
+                  <Button
+                    onClick={handleChangePassword}
+                    className='bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white'>
+                    Cambiar Contraseña
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
         {/* Sección de Pagos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
