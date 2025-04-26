@@ -129,13 +129,13 @@ export default function NewBookPage() {
   }
 
   const breadcrumbItems = [
-    { label: "Dashboard", link: "/dashboard" },
-    { label: "Ediciones", link: "/dashboard/editions" },
-    { label: editionName, link: `/dashboard/editions/${editionId}` },
-    { label: "Libros", link: `/dashboard/editions/${editionId}/books` },
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Ediciones", href: "/dashboard/editions" },
+    { label: editionName, href: `/dashboard/editions/${editionId}` },
+    { label: "Libros", href: `/dashboard/editions/${editionId}/books` },
     {
       label: "Nuevo Libro",
-      link: `/dashboard/editions/${editionId}/books/new`,
+      href: `/dashboard/editions/${editionId}/books/new`,
     },
   ];
 
@@ -330,7 +330,7 @@ export default function NewBookPage() {
             form='bookForm'
             disabled={saving}
             className='w-full md:w-auto ml-0 md:ml-2 mt-2 md:mt-0'
-            variant='gradient'>
+            variant='default'>
             {saving ? (
               <>
                 <span className='animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full inline-block'></span>
