@@ -51,6 +51,8 @@ export default function NewEditionPage() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
 
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -67,40 +69,78 @@ export default function NewEditionPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // submit: sube a S3 y luego crea edición
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`, {
+      let coverKey = formData.cover; // si ya es URL, evita re-subir
+      if (file) {
+        // 1) Pide presigned URL
+        const token = localStorage.getItem("token");
+        const presignRes = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/uploads/cover`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              fileType: file.type,
+            }),
+          }
+        ).then((r) => r.json());
+        // 2) Haz PUT a S3
+        const uploadRes = await fetch(presignRes.uploadUrl, {
+          method: "PUT",
+          body: file,
+        });
+        if (!uploadRes.ok) {
+          throw new Error("Error al subir la portada a S3");
+        }
+        coverKey = presignRes.key;
+      }
+
+      // 3) Llamada para crear la edición
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          title: formData.title,
-          subtitle: formData.subtitle,
+          ...formData,
           year: formData.year ? Number(formData.year) : null,
-          cover: formData.cover,
-          openDate: formData.openDate,
-          deadlineChapters: formData.deadlineChapters,
-          publishDate: formData.publishDate,
-          normativa: formData.normativa,
-          description: formData.description,
+          cover: coverKey,
         }),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Error al crear edición");
+        router.push("/dashboard/editions");
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Error al crear edición");
-      }
-      router.push("/dashboard/editions");
-    } catch (error: any) {
-      setMessage(error.message);
+    } catch (err: any) {
+      setMessage(err.message);
     } finally {
       setIsLoading(false);
     }
+  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      // validar 600×800px
+      if (img.width !== 600 || img.height !== 800) {
+        setMessage("La portada debe medir exactamente 600×800px.");
+        return;
+      }
+      setFile(f);
+      setPreview(URL.createObjectURL(f));
+      setMessage("");
+    };
+    img.src = URL.createObjectURL(f);
   };
 
   return (
@@ -113,18 +153,18 @@ export default function NewEditionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <Button
-              variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
-              onClick={() => router.push("/dashboard/editions")}>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              Volver
-            </Button>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Nueva Edición
-            </span>
-          </Breadcrumb>
+          <Breadcrumb
+            items={[
+              {
+                label: "Volver",
+                href: "/dashboard/editions",
+              },
+              {
+                label: "Nueva Edición",
+                href: "",
+              },
+            ]}
+          />
         </motion.div>
 
         <motion.div
@@ -221,20 +261,22 @@ export default function NewEditionPage() {
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label
-                      htmlFor='cover'
-                      className='flex items-center gap-2 text-gray-700'>
-                      <ImageIcon className='h-4 w-4 text-purple-600' />
-                      Portada (URL)
+                    <Label className='flex items-center gap-2 text-gray-700'>
+                      <ImageIcon className='h-4 w-4 text-purple-600' /> Portada
                     </Label>
                     <Input
-                      id='cover'
-                      name='cover'
-                      value={formData.cover}
-                      onChange={handleChange}
-                      placeholder='https://...'
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                      type='file'
+                      accept='image/png,image/jpeg'
+                      onChange={handleFileChange}
+                      disabled={isLoading}
                     />
+                    {preview && (
+                      <img
+                        src={preview}
+                        className='mt-2 max-w-xs border'
+                        alt='Previsualización portada'
+                      />
+                    )}
                   </div>
                 </div>
 
