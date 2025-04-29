@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackgroundBlobs } from "@/components/background-blobs";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   ChevronLeft,
@@ -38,6 +38,7 @@ import {
   DollarSign,
   BookText,
   Hash,
+  Tag,
 } from "lucide-react";
 
 export default function BookDetailPage() {
@@ -127,6 +128,15 @@ export default function BookDetailPage() {
     setMessage("");
     try {
       const token = localStorage.getItem("token");
+
+      // Create a copy of the form data for submission
+      const submitData = { ...formData };
+
+      // If it's an edition book, ensure price is set to 0
+      if (formData.bookType === "libro edición") {
+        submitData.price = 0;
+      }
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`,
         {
@@ -135,7 +145,7 @@ export default function BookDetailPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(submitData),
         }
       );
       if (!res.ok) {
@@ -176,6 +186,9 @@ export default function BookDetailPage() {
     }
   };
 
+  // Check if the book is an edition book
+  const isEditionBook = formData.bookType === "libro edición";
+
   if (loading) {
     return (
       <div className='relative overflow-hidden min-h-screen py-8'>
@@ -204,10 +217,10 @@ export default function BookDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
-          <Breadcrumb>
+          <div className='flex items-center gap-2'>
             <Button
               variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
+              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50'
               onClick={() =>
                 router.push(`/dashboard/editions/${editionId}/books`)
               }>
@@ -217,7 +230,18 @@ export default function BookDetailPage() {
             <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
               Detalle del Libro
             </span>
-          </Breadcrumb>
+
+            {/* Book type badge */}
+            <Badge
+              className={`ml-2 ${
+                isEditionBook
+                  ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                  : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+              }`}>
+              <Tag className='h-3 w-3 mr-1' />
+              {isEditionBook ? "Libro de Edición" : "Libro Propio"}
+            </Badge>
+          </div>
           <Link
             href={`/dashboard/editions/${editionId}/books/${bookId}/chapters`}>
             <Button
@@ -375,29 +399,34 @@ export default function BookDetailPage() {
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
                     />
                   </div>
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='price'
-                      className='flex items-center gap-2 text-gray-700'>
-                      <DollarSign className='h-4 w-4 text-purple-600' />
-                      Precio
-                    </Label>
-                    <Input
-                      id='price'
-                      name='price'
-                      type='number'
-                      value={formData.price || ""}
-                      onChange={handleChange}
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    />
-                  </div>
+
+                  {/* Only show price for non-edition books */}
+                  {!isEditionBook && (
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='price'
+                        className='flex items-center gap-2 text-gray-700'>
+                        <DollarSign className='h-4 w-4 text-purple-600' />
+                        Precio
+                      </Label>
+                      <Input
+                        id='price'
+                        name='price'
+                        type='number'
+                        value={formData.price || ""}
+                        onChange={handleChange}
+                        required
+                        className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                      />
+                    </div>
+                  )}
+
                   <div className='space-y-2'>
                     <Label
                       htmlFor='isbn'
                       className='flex items-center gap-2 text-gray-700'>
                       <Hash className='h-4 w-4 text-purple-600' />
-                      ISBN (opcional)
+                      ISBN {isEditionBook ? "" : "(opcional)"}
                     </Label>
                     <Input
                       id='isbn'
@@ -427,7 +456,13 @@ export default function BookDetailPage() {
                       }
                       onChange={handleChange}
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                      disabled={isEditionBook}
                     />
+                    {isEditionBook && (
+                      <p className='text-xs text-purple-600 italic'>
+                        Heredada de la edición
+                      </p>
+                    )}
                   </div>
                   <div className='space-y-2'>
                     <Label
@@ -447,7 +482,13 @@ export default function BookDetailPage() {
                       }
                       onChange={handleChange}
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                      disabled={isEditionBook}
                     />
+                    {isEditionBook && (
+                      <p className='text-xs text-purple-600 italic'>
+                        Heredada de la edición
+                      </p>
+                    )}
                   </div>
                   <div className='space-y-2'>
                     <Label
@@ -467,9 +508,25 @@ export default function BookDetailPage() {
                       }
                       onChange={handleChange}
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                      disabled={isEditionBook}
                     />
+                    {isEditionBook && (
+                      <p className='text-xs text-purple-600 italic'>
+                        Heredada de la edición
+                      </p>
+                    )}
                   </div>
                 </div>
+
+                {isEditionBook && (
+                  <Alert className='bg-purple-50 border-purple-200 text-purple-800'>
+                    <InfoIcon className='h-4 w-4 text-purple-600' />
+                    <AlertDescription>
+                      Este es un libro de edición. Las fechas se heredan
+                      automáticamente de la edición y no tiene precio.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
               <CardFooter className='flex justify-between'>
                 <div className='flex gap-2'>
@@ -530,5 +587,26 @@ export default function BookDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Missing InfoIcon component
+function InfoIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'>
+      <circle cx='12' cy='12' r='10' />
+      <line x1='12' y1='16' x2='12' y2='12' />
+      <line x1='12' y1='8' x2='12.01' y2='8' />
+    </svg>
   );
 }

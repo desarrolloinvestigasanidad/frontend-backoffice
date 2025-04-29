@@ -178,35 +178,18 @@ export default function ChaptersListPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <Button
-              variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
-              onClick={() =>
-                router.push(`/dashboard/editions/${editionId}/books/${bookId}`)
-              }>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              Volver al Libro
-            </Button>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Capítulos
-            </span>
-          </Breadcrumb>
-          <Link
-            href={`/dashboard/editions/${editionId}/books/${bookId}/chapters/new`}>
-            <Button
-              className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
-              onMouseEnter={() => handleMouseEnter("newChapter")}
-              onMouseLeave={() => handleMouseLeave("newChapter")}>
-              <motion.span
-                className='flex items-center'
-                animate={{ x: hoverStates["newChapter"] ? 3 : 0 }}
-                transition={{ duration: 0.2 }}>
-                <Plus className='mr-2 h-4 w-4' />
-                Crear Capítulo
-              </motion.span>
-            </Button>
-          </Link>
+          <Breadcrumb
+            items={[
+              {
+                label: "Volver al Libro",
+                href: `/dashboard/editions/${editionId}/books/${bookId}`,
+              },
+              {
+                label: "Capítulos",
+                href: "",
+              },
+            ]}
+          />
         </motion.div>
 
         <motion.div

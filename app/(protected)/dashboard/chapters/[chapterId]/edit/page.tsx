@@ -253,18 +253,18 @@ export default function EditChapterPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <Button
-              variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
-              onClick={() => router.push("/dashboard/chapters")}>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              Volver a Capítulos
-            </Button>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Editar Capítulo
-            </span>
-          </Breadcrumb>
+          <Breadcrumb
+            items={[
+              {
+                label: "Capítulos",
+                href: "/dashboard/chapters",
+              },
+              {
+                label: "Editar Capítulo",
+                href: `/dashboard/chapters/${chapterId}/edit`,
+              },
+            ]}
+          />
         </motion.div>
 
         <motion.div

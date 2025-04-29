@@ -19,14 +19,12 @@ import { BackgroundBlobs } from "@/components/background-blobs";
 import { Breadcrumb } from "@/components/breadcrumb";
 import {
   BookOpen,
-  ChevronLeft,
   Plus,
   Eye,
   Edit,
   BookPlus,
   AlertCircle,
   Tag,
-  DollarSign,
   Layers,
   Search,
 } from "lucide-react";
@@ -37,6 +35,7 @@ type Book = {
   category: string;
   price: number;
   cover?: string | null;
+  bookType?: string; // Added bookType property
 };
 
 export default function BooksListPage() {
@@ -139,18 +138,18 @@ export default function BooksListPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb>
-            <Button
-              variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
-              onClick={() => router.push(`/dashboard/editions/${editionId}`)}>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              Volver a la Edición
-            </Button>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Libros de la Edición
-            </span>
-          </Breadcrumb>
+          <Breadcrumb
+            items={[
+              {
+                label: "Volver a la Edición",
+                href: `/dashboard/editions/${editionId}`,
+              },
+              {
+                label: "Libros de la Edición",
+                href: `/dashboard/editions/${editionId}/books`,
+              },
+            ]}
+          />
           <Link href={`/dashboard/editions/${editionId}/books/new`}>
             <Button
               className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
@@ -252,13 +251,14 @@ export default function BooksListPage() {
                         <Tag className='h-3 w-3 mr-1' />
                         {book.category || "Sin categoría"}
                       </Badge>
-                      <Badge variant='default'>
-                        <DollarSign className='h-3 w-3 mr-1' />
-                        {isNaN(Number(book.price))
-                          ? "-"
-                          : Number(book.price).toFixed(2)}
-                        €
-                      </Badge>
+                      {book.bookType !== "libro edición" && (
+                        <Badge variant='default'>
+                          {isNaN(Number(book.price))
+                            ? "-"
+                            : Number(book.price).toFixed(2)}
+                          €
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className='pt-2'>
@@ -285,7 +285,6 @@ export default function BooksListPage() {
                           <span className='ml-2'>-</span>
                         </div>
                         <div className='flex items-center text-sm text-gray-600'>
-                          <DollarSign className='h-4 w-4 mr-2 text-purple-600' />
                           <span className='font-medium'>Precio:</span>
                           <span className='ml-2'>
                             {isNaN(Number(book.price))

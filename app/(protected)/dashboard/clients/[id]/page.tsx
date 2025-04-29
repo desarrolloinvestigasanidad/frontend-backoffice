@@ -53,6 +53,7 @@ type Client = {
   professionalCategory?: string;
   address?: string;
   createdAt?: string;
+  verified: number;
 };
 
 type Payment = {

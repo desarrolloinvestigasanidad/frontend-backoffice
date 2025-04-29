@@ -166,20 +166,6 @@ export default function ChaptersPage() {
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
           <Breadcrumb items={[{ label: "Gestión de Capítulos", href: "#" }]} />
-          <Link href='/dashboard/chapters/new'>
-            <Button
-              className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
-              onMouseEnter={() => handleMouseEnter("newChapter")}
-              onMouseLeave={() => handleMouseLeave("newChapter")}>
-              <motion.span
-                className='flex items-center'
-                animate={{ x: hoverStates["newChapter"] ? 3 : 0 }}
-                transition={{ duration: 0.2 }}>
-                <Plus className='mr-2 h-4 w-4' />
-                Crear Capítulo
-              </motion.span>
-            </Button>
-          </Link>
         </motion.div>
 
         <motion.div
