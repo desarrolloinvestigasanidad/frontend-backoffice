@@ -34,14 +34,15 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  BookText,
   Type,
-  BookOpen,
+  BookText,
   ListChecks,
   BarChart2,
   MessageSquare,
   BookMarked,
   FileEdit,
+  Edit,
+  BookOpen,
 } from "lucide-react";
 
 // Componente para mostrar la barra de progreso del conteo de palabras
@@ -92,7 +93,8 @@ function WordCountIndicator({
           style={{ width: `${progress}%` }}
           className={`h-2 rounded-full transition-all duration-300 ${
             wordCount >= min && wordCount <= max ? "bg-green-500" : "bg-red-500"
-          }`}></div>
+          }`}
+        />
       </div>
       <p className={`text-xs ${statusColor} mt-1`}>{statusMessage}</p>
     </div>
@@ -103,7 +105,7 @@ export default function EditChapterPage() {
   const { chapterId } = useParams();
   const router = useRouter();
 
-  // Estado para almacenar los datos del capítulo y campos del formulario
+  // Estado para datos y formulario
   const [chapter, setChapter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,7 +113,7 @@ export default function EditChapterPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
 
-  // Estados para cada campo editable
+  // Campos editables
   const [title, setTitle] = useState("");
   const [studyType, setStudyType] = useState("");
   const [methodology, setMethodology] = useState("");
@@ -120,28 +122,23 @@ export default function EditChapterPage() {
   const [results, setResults] = useState("");
   const [discussion, setDiscussion] = useState("");
   const [bibliography, setBibliography] = useState("");
-  const [status, setStatus] = useState("borrador"); // Valor por defecto
+  const [status, setStatus] = useState("borrador");
   const [bookTitle, setBookTitle] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
-  const handleMouseEnter = (id: string) => {
+  const handleMouseEnter = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: true }));
-  };
-
-  const handleMouseLeave = (id: string) => {
+  const handleMouseLeave = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: false }));
-  };
 
-  // Cargar datos del capítulo desde la API y prellenar el formulario
+  // Carga inicial
   useEffect(() => {
     const fetchChapter = async () => {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/${chapterId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!res.ok) {
           const errData = await res.json();
@@ -149,8 +146,6 @@ export default function EditChapterPage() {
         }
         const data = await res.json();
         setChapter(data);
-
-        // Prellenar los campos del formulario con la información del capítulo
         setTitle(data.title || "");
         setStudyType(data.studyType || "");
         setMethodology(data.methodology || "");
@@ -168,17 +163,15 @@ export default function EditChapterPage() {
         setLoading(false);
       }
     };
-
     if (chapterId) fetchChapter();
   }, [chapterId]);
 
-  // Función para enviar el formulario y actualizar el capítulo en el backend
+  // Guardar cambios
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage("");
     setError("");
-
     try {
       const token = localStorage.getItem("token");
       const body = {
@@ -192,7 +185,6 @@ export default function EditChapterPage() {
         bibliography,
         status,
       };
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/${chapterId}`,
         {
@@ -204,19 +196,13 @@ export default function EditChapterPage() {
           body: JSON.stringify(body),
         }
       );
-
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Error al actualizar el capítulo");
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al actualizar el capítulo");
       }
-
       setMessageType("success");
       setMessage("Capítulo actualizado correctamente");
-
-      // Esperar un momento antes de redirigir
-      setTimeout(() => {
-        router.push("/dashboard/chapters");
-      }, 1500);
+      setTimeout(() => router.push("/dashboard/chapters"), 1500);
     } catch (err: any) {
       setMessageType("error");
       setMessage(err.message);
@@ -232,7 +218,7 @@ export default function EditChapterPage() {
         <div className='container mx-auto px-4 relative z-10'>
           <div className='flex items-center justify-center h-64'>
             <div className='relative'>
-              <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+              <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin' />
               <div className='absolute inset-0 flex items-center justify-center'>
                 <FileText className='h-6 w-6 text-purple-500' />
               </div>
@@ -246,7 +232,6 @@ export default function EditChapterPage() {
   return (
     <div className='relative overflow-hidden min-h-screen py-8'>
       <BackgroundBlobs />
-
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -255,14 +240,8 @@ export default function EditChapterPage() {
           className='flex items-center justify-between'>
           <Breadcrumb
             items={[
-              {
-                label: "Capítulos",
-                href: "/dashboard/chapters",
-              },
-              {
-                label: "Editar Capítulo",
-                href: `/dashboard/chapters/${chapterId}/edit`,
-              },
+              { label: "Capítulos", href: "/dashboard/chapters" },
+              { label: "Editar Capítulo", href: "#" },
             ]}
           />
         </motion.div>
@@ -280,7 +259,7 @@ export default function EditChapterPage() {
               Libro: <span className='font-medium'>{bookTitle}</span>
             </p>
           )}
-          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
+          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto' />
         </motion.div>
 
         {message && (
@@ -300,7 +279,7 @@ export default function EditChapterPage() {
         )}
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-          {/* Columna izquierda: Formulario de edición */}
+          {/* Formulario */}
           <motion.form
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 20 }}
@@ -357,9 +336,109 @@ export default function EditChapterPage() {
 
                 <div className='space-y-2'>
                   <Label
-                    htmlFor='status'
+                    htmlFor='methodology'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <BookText className='h-4 w-4 text-purple-600' />
+                    Metodología
+                  </Label>
+                  <Textarea
+                    id='methodology'
+                    value={methodology}
+                    onChange={(e) => setMethodology(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='introduction'
                     className='flex items-center gap-2 text-gray-700'>
                     <BookOpen className='h-4 w-4 text-purple-600' />
+                    Introducción
+                  </Label>
+                  <Textarea
+                    id='introduction'
+                    value={introduction}
+                    onChange={(e) => setIntroduction(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='objectives'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <ListChecks className='h-4 w-4 text-purple-600' />
+                    Objetivos
+                  </Label>
+                  <Textarea
+                    id='objectives'
+                    value={objectives}
+                    onChange={(e) => setObjectives(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='results'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <BarChart2 className='h-4 w-4 text-purple-600' />
+                    Resultados
+                  </Label>
+                  <Textarea
+                    id='results'
+                    value={results}
+                    onChange={(e) => setResults(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='discussion'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <MessageSquare className='h-4 w-4 text-purple-600' />
+                    Discusión/Conclusión
+                  </Label>
+                  <Textarea
+                    id='discussion'
+                    value={discussion}
+                    onChange={(e) => setDiscussion(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='bibliography'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <BookMarked className='h-4 w-4 text-purple-600' />
+                    Bibliografía
+                  </Label>
+                  <Textarea
+                    id='bibliography'
+                    value={bibliography}
+                    onChange={(e) => setBibliography(e.target.value)}
+                    rows={4}
+                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    required
+                  />
+                </div>
+              </CardContent>
+
+              {/* Estado movido al final, encima de botones */}
+              <CardContent className='px-0'>
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='status'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <Edit className='h-4 w-4 text-purple-600' />
                     Estado
                   </Label>
                   <Select
@@ -379,109 +458,8 @@ export default function EditChapterPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='methodology'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <BookOpen className='h-4 w-4 text-purple-600' />
-                    Metodología
-                  </Label>
-                  <Textarea
-                    id='methodology'
-                    value={methodology}
-                    onChange={(e) => setMethodology(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='introduction'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <BookOpen className='h-4 w-4 text-purple-600' />
-                    Introducción
-                  </Label>
-                  <Textarea
-                    id='introduction'
-                    value={introduction}
-                    onChange={(e) => setIntroduction(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='objectives'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <ListChecks className='h-4 w-4 text-purple-600' />
-                    Objetivos
-                  </Label>
-                  <Textarea
-                    id='objectives'
-                    value={objectives}
-                    onChange={(e) => setObjectives(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='results'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <BarChart2 className='h-4 w-4 text-purple-600' />
-                    Resultados
-                  </Label>
-                  <Textarea
-                    id='results'
-                    value={results}
-                    onChange={(e) => setResults(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='discussion'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <MessageSquare className='h-4 w-4 text-purple-600' />
-                    Discusión/Conclusión
-                  </Label>
-                  <Textarea
-                    id='discussion'
-                    value={discussion}
-                    onChange={(e) => setDiscussion(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='bibliography'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <BookMarked className='h-4 w-4 text-purple-600' />
-                    Bibliografía
-                  </Label>
-                  <Textarea
-                    id='bibliography'
-                    value={bibliography}
-                    onChange={(e) => setBibliography(e.target.value)}
-                    rows={4}
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    required
-                  />
-                </div>
               </CardContent>
+
               <CardFooter className='px-0 pt-4 flex justify-between'>
                 <Button
                   type='button'
@@ -515,7 +493,7 @@ export default function EditChapterPage() {
             </Card>
           </motion.form>
 
-          {/* Columna derecha: Panel de revisión con indicadores */}
+          {/* Panel derecho */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
