@@ -63,7 +63,7 @@ export default function LoginPage() {
         }
 
         localStorage.setItem("token", data.token);
-        router.replace("/dashboard");
+        router.push("/dashboard");
       } else {
         setMessage(data.message || "Error al iniciar sesión.");
       }
