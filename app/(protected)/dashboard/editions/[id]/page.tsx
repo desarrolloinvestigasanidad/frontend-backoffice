@@ -21,7 +21,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { BackgroundBlobs } from "@/components/background-blobs";
-import { Breadcrumb } from "@/components/breadcrumb";
+
 import {
   BookOpen,
   ChevronLeft,
@@ -217,18 +217,17 @@ export default function EditionDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
-          <Breadcrumb>
-            <Button
-              variant='ghost'
-              className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
-              onClick={() => router.push("/dashboard/editions")}>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              Volver a Ediciones
-            </Button>
-            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-              Detalle de Edición
-            </span>
-          </Breadcrumb>
+          <Button
+            variant='ghost'
+            className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50 mr-2'
+            onClick={() => router.push("/dashboard/editions")}>
+            <ChevronLeft className='mr-1 h-4 w-4' />
+            Volver a Ediciones
+          </Button>
+          <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+            Detalle de Edición
+          </span>
+
           <div className='flex flex-wrap gap-2'>
             <Link href={`/dashboard/editions/${id}/books`}>
               <Button
