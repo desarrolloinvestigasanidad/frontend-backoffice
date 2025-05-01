@@ -486,25 +486,6 @@ export default function DiscountsPage() {
                     />
                   </div>
 
-                  {/* Importe mínimo */}
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='minimumPrice'
-                      className='flex items-center gap-2 text-gray-700'>
-                      <DollarSign className='h-4 w-4 text-purple-600' />
-                      Importe mínimo (€) (opcional)
-                    </Label>
-                    <Input
-                      id='minimumPrice'
-                      name='minimumPrice'
-                      type='number'
-                      value={formData.minimumPrice}
-                      onChange={handleInputChange}
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                      step='0.01'
-                    />
-                  </div>
-
                   {/* Máx. Usos */}
                   <div className='space-y-2'>
                     <Label
@@ -575,24 +556,6 @@ export default function DiscountsPage() {
                       name='endDate'
                       type='date'
                       value={formData.endDate}
-                      onChange={handleInputChange}
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    />
-                  </div>
-
-                  {/* Fecha de expiración */}
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='expirationDate'
-                      className='flex items-center gap-2 text-gray-700'>
-                      <Calendar className='h-4 w-4 text-purple-600' />
-                      Fecha de Expiración (opcional)
-                    </Label>
-                    <Input
-                      id='expirationDate'
-                      name='expirationDate'
-                      type='date'
-                      value={formData.expirationDate}
                       onChange={handleInputChange}
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
                     />
