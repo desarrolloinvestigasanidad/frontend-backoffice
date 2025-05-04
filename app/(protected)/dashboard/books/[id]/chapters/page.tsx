@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackgroundBlobs } from "@/components/background-blobs";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { BookCoverModal } from "@/components/book-cover-modal";
 
 import {
   BookOpen,
@@ -88,6 +89,8 @@ export default function BookChaptersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
+  const [selectedCover, setSelectedCover] = useState<string>("");
 
   /* -------------------------------------------------------------------- */
   /*  Hover helpers                                                       */
@@ -106,7 +109,9 @@ export default function BookChaptersPage() {
         const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         if (!res.ok) throw new Error("Error al cargar detalles del libro");
         setBook(await res.json());
@@ -120,7 +125,9 @@ export default function BookChaptersPage() {
         const token = localStorage.getItem("token");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/chapters`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         if (!res.ok) throw new Error("Error al cargar capítulos");
         const data = await res.json();
@@ -140,13 +147,32 @@ export default function BookChaptersPage() {
   /*  Generate book handler                                               */
   /* -------------------------------------------------------------------- */
   const handleGenerateBook = async () => {
+    // Mostrar modal de selección de portada en lugar de generar directamente
+    setShowCoverModal(true);
+  };
+
+  // Nueva función para continuar con la generación después de seleccionar portada
+  const handleContinueGeneration = async (coverUrl: string) => {
+    setShowCoverModal(false);
+    setSelectedCover(coverUrl);
     setGenerating(true);
+
     try {
       const token = localStorage.getItem("token");
+
+      // Incluir la URL de la portada en la petición
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ coverUrl }),
+        }
       );
+
       if (!res.ok) throw new Error("No se pudo generar el libro");
       const { url } = await res.json();
       const fullUrl = url.startsWith("http")
@@ -653,6 +679,14 @@ export default function BookChaptersPage() {
             </div>
           </div>
         )}
+        {/* Modal de selección de portada */}
+        <BookCoverModal
+          isOpen={showCoverModal}
+          onClose={() => setShowCoverModal(false)}
+          onConfirm={handleContinueGeneration}
+          bookTitle={book?.title}
+          currentCover={book?.cover}
+        />
       </div>
     </div>
   );
