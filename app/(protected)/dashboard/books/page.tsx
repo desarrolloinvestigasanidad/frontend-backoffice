@@ -344,13 +344,15 @@ export default function BooksPage() {
                         <Tag className='h-3 w-3 mr-1' />
                         {book.category || "Sin categoría"}
                       </Badge>
-                      <Badge variant='default'>
-                        <DollarSign className='h-3 w-3 mr-1' />
-                        {isNaN(Number(book.price))
-                          ? "-"
-                          : Number(book.price).toFixed(2)}
-                        €
-                      </Badge>
+                      {book.bookType !== "libro edición" && (
+                        <Badge variant='default'>
+                          <DollarSign className='h-3 w-3 mr-1' />
+                          {isNaN(Number(book.price))
+                            ? "-"
+                            : Number(book.price).toFixed(2)}
+                          €
+                        </Badge>
+                      )}
                       <Badge
                         variant={
                           book.bookType === "libro propio"
@@ -395,16 +397,18 @@ export default function BooksPage() {
                             <span className='ml-2'>{book.editionTitle}</span>
                           </div>
                         )}
-                        <div className='flex items-center text-sm text-gray-600'>
-                          <DollarSign className='h-4 w-4 mr-2 text-purple-600' />
-                          <span className='font-medium'>Precio:</span>
-                          <span className='ml-2'>
-                            {isNaN(Number(book.price))
-                              ? "-"
-                              : Number(book.price).toFixed(2)}
-                            €
-                          </span>
-                        </div>
+                        {book.bookType !== "libro edición" && (
+                          <div className='flex items-center text-sm text-gray-600'>
+                            <DollarSign className='h-4 w-4 mr-2 text-purple-600' />
+                            <span className='font-medium'>Precio:</span>
+                            <span className='ml-2'>
+                              {isNaN(Number(book.price))
+                                ? "-"
+                                : Number(book.price).toFixed(2)}
+                              €
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
