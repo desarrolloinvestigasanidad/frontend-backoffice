@@ -899,7 +899,7 @@ export default function ClientDetailPage() {
                   <FileText className='h-6 w-6 text-yellow-700' />
                 </div>
                 <div>
-                  <CardTitle>Capítulos Propios</CardTitle>
+                  <CardTitle>Capítulos en libros Personalizados</CardTitle>
                   <CardDescription>
                     Capítulos escritos por el cliente
                   </CardDescription>
