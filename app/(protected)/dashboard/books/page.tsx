@@ -165,18 +165,35 @@ export default function BooksPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className='flex items-center justify-between'>
+          className='flex items-center justify-between gap-4'>
+          {/* 1) Crear Libro Personalizado */}
           <Link href='/dashboard/books/new'>
             <Button
-              className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
-              onMouseEnter={() => handleMouseEnter("newBook")}
-              onMouseLeave={() => handleMouseLeave("newBook")}>
+              onMouseEnter={() => handleMouseEnter("newPersonal")}
+              onMouseLeave={() => handleMouseLeave("newPersonal")}
+              className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
               <motion.span
                 className='flex items-center'
-                animate={{ x: hoverStates["newBook"] ? 3 : 0 }}
+                animate={{ x: hoverStates["newPersonal"] ? 3 : 0 }}
                 transition={{ duration: 0.2 }}>
                 <BookPlus className='mr-2 h-4 w-4' />
-                Crear Libro Personalizado
+                Libro Personalizado
+              </motion.span>
+            </Button>
+          </Link>
+
+          {/* 2) Crear Libro de Edición */}
+          <Link href='/dashboard/editions'>
+            <Button
+              onMouseEnter={() => handleMouseEnter("newEdition")}
+              onMouseLeave={() => handleMouseLeave("newEdition")}
+              className='bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'>
+              <motion.span
+                className='flex items-center'
+                animate={{ x: hoverStates["newEdition"] ? 3 : 0 }}
+                transition={{ duration: 0.2 }}>
+                <Layers className='mr-2 h-4 w-4' />
+                Libro de Edición
               </motion.span>
             </Button>
           </Link>
