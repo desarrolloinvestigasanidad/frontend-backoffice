@@ -311,8 +311,7 @@ export default function ChaptersListPage() {
                     </div>
                   </CardContent>
                   <CardFooter className='flex justify-end pt-2'>
-                    <Link
-                      href={`/dashboard/editions/${editionId}/books/${bookId}/chapters/${chapter.id}`}>
+                    <Link href={`/dashboard/chapters/${chapter.id}/edit`}>
                       <Button
                         variant='outline'
                         size='sm'
