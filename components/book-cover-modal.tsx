@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 type BookCoverModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (coverUrl: string) => void;
+  onConfirm: (fileOrUrl: File | string) => void;
   bookTitle?: string;
   currentCover?: string;
 };
@@ -112,7 +112,9 @@ export function BookCoverModal({
       toast.error("Por favor, selecciona o sube una portada");
       return;
     }
-    onConfirm(coverUrl);
+    onConfirm(
+      activeTab === "upload" ? fileInputRef.current?.files?.[0] || "" : coverUrl
+    );
   };
 
   return (

@@ -65,6 +65,7 @@ type BookT = {
   cover?: string;
   price: number;
   status: string;
+  documentUrl?: string; // Added documentUrl property
 };
 
 /* ---------------------------------------------------------------------- */
@@ -119,13 +120,33 @@ export default function BookChaptersPage() {
   }, [bookId]);
 
   const handleGenerateBook = () => setShowCoverModal(true);
-
-  const handleContinueGeneration = async (coverUrl: string) => {
-    setShowCoverModal(false);
+  const handleContinueGeneration = async (coverFile: File) => {
     setGenerating(true);
+    const token = localStorage.getItem("token");
+
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
+      // 1️⃣ Subir la portada
+      const form = new FormData();
+      form.append("cover", coverFile);
+
+      const uploadRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/cover`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        }
+      );
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json();
+        throw new Error(err.message || "No se pudo subir la portada");
+      }
+      const { coverUrl } = await uploadRes.json();
+      setBook((b) => (b ? { ...b, cover: coverUrl } : b));
+      toast.success("Portada subida correctamente");
+
+      // 2️⃣ Generar el libro
+      const genRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
         {
           method: "POST",
@@ -133,11 +154,16 @@ export default function BookChaptersPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ coverUrl }),
+          body: JSON.stringify({}), // tu endpoint no necesita contenido
         }
       );
-      if (!res.ok) throw new Error("No se pudo generar el libro");
-      const { url } = await res.json();
+      if (!genRes.ok) {
+        const err = await genRes.json();
+        throw new Error(err.message || "Error al generar el libro");
+      }
+      const { url } = await genRes.json();
+
+      // 3️⃣ Abrir o descargar PDF
       window.open(
         url.startsWith("http")
           ? url
@@ -148,6 +174,7 @@ export default function BookChaptersPage() {
       toast.error(err.message);
     } finally {
       setGenerating(false);
+      setShowCoverModal(false);
     }
   };
 
@@ -536,15 +563,15 @@ export default function BookChaptersPage() {
                             <FileEdit className='mr-1 h-4 w-4' /> Abrir
                           </Button>
                         </Link>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          className='border-red-200 text-red-700 hover:bg-red-50'
-                          onClick={() =>
-                            alert(`Eliminar capítulo: ${chapter.id}`)
-                          }>
-                          <Trash2 className='mr-1 h-4 w-4' /> Eliminar
-                        </Button>
+                        {book?.documentUrl && (
+                          <Button
+                            variant='outline'
+                            onClick={() =>
+                              window.open(book.documentUrl, "_blank")
+                            }>
+                            Descargar PDF
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -557,7 +584,13 @@ export default function BookChaptersPage() {
         <BookCoverModal
           isOpen={showCoverModal}
           onClose={() => setShowCoverModal(false)}
-          onConfirm={handleContinueGeneration}
+          onConfirm={(fileOrUrl) => {
+            if (fileOrUrl instanceof File) {
+              handleContinueGeneration(fileOrUrl);
+            } else {
+              console.error("Expected a File, but received a string.");
+            }
+          }}
           bookTitle={book?.title}
           currentCover={book?.cover}
         />
