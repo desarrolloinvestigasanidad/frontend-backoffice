@@ -39,6 +39,7 @@ import {
   AlertCircle,
   CheckCircle,
   Key,
+  Bell,
 } from "lucide-react";
 
 type Client = {
@@ -54,6 +55,8 @@ type Client = {
   address?: string;
   createdAt?: string;
   verified: number;
+  infoAccepted?: number;
+  deviceIp?: string;
 };
 
 type Payment = {
@@ -648,6 +651,22 @@ export default function ClientDetailPage() {
                             .join(", ") || "No especificado"}
                         </p>
                       )}
+                    </div>
+                    <div className='space-y-2'>
+                      <Label className='flex items-center gap-2 text-gray-700'>
+                        <Bell className='h-4 w-4 text-purple-600' />
+                        Notificaciones
+                      </Label>
+                      <div className='flex items-center gap-4'>
+                        <p className='font-medium text-gray-900'>
+                          {Number(client.infoAccepted) === 1
+                            ? "Aceptadas"
+                            : "No aceptadas"}
+                        </p>
+                        <span className='text-sm text-gray-500'>
+                          IP: {client.deviceIp || "N/A"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
