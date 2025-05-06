@@ -26,6 +26,7 @@ import {
   Search,
   Layers,
   FileEdit,
+  Filter,
 } from "lucide-react";
 
 type Chapter = {
@@ -45,6 +46,7 @@ export default function ChaptersListPage() {
   const [bookTitle, setBookTitle] = useState("");
   const [editionTitle, setEditionTitle] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
   const handleMouseEnter = (id: string) => {
@@ -65,13 +67,11 @@ export default function ChaptersListPage() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!res.ok) {
-          throw new Error("Error al cargar detalles de la edición");
-        }
+        if (!res.ok) throw new Error("Error al cargar detalles de la edición");
         const data = await res.json();
         setEditionTitle(data.title || "Edición");
       } catch (err) {
-        console.error("Error al cargar detalles de la edición:", err);
+        console.error(err);
       }
     };
 
@@ -84,13 +84,11 @@ export default function ChaptersListPage() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!res.ok) {
-          throw new Error("Error al cargar detalles del libro");
-        }
+        if (!res.ok) throw new Error("Error al cargar detalles del libro");
         const data = await res.json();
         setBookTitle(data.title || "Libro");
       } catch (err) {
-        console.error("Error al cargar detalles del libro:", err);
+        console.error(err);
       }
     };
 
@@ -100,9 +98,7 @@ export default function ChaptersListPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}/chapters`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         if (!res.ok) {
@@ -125,28 +121,27 @@ export default function ChaptersListPage() {
     }
   }, [editionId, bookId]);
 
-  // Filtrar capítulos por búsqueda
-  const filteredChapters = chapters.filter((chapter) =>
-    chapter.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrado por búsqueda y estado
+  const filteredChapters = chapters
+    .filter((chapter) =>
+      chapter.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((chapter) =>
+      statusFilter === "all"
+        ? true
+        : chapter.status.toLowerCase() === statusFilter
+    );
 
-  // Función para obtener el color del badge según el estado
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
-      case "published":
-      case "publicado":
-        return "default";
-      case "draft":
-      case "borrador":
+      case "pendiente":
+        return "outline";
+      case "aprobado":
         return "secondary";
-      case "review":
-      case "revisión":
-        return "default";
-      case "rejected":
       case "rechazado":
         return "destructive";
       default:
-        return "outline";
+        return "default";
     }
   };
 
@@ -184,10 +179,7 @@ export default function ChaptersListPage() {
                 label: "Volver al Libro",
                 href: `/dashboard/editions/${editionId}/books/${bookId}`,
               },
-              {
-                label: "Capítulos",
-                href: "",
-              },
+              { label: "Capítulos", href: "" },
             ]}
           />
         </motion.div>
@@ -216,13 +208,14 @@ export default function ChaptersListPage() {
           </Alert>
         )}
 
+        {/* Controles: búsqueda + filtro de estado */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className='flex flex-col md:flex-row justify-between items-center gap-4 mb-6'>
           <div className='relative w-full md:w-auto flex-1 max-w-md'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4' />
             <input
               type='text'
               placeholder='Buscar capítulos...'
@@ -231,6 +224,20 @@ export default function ChaptersListPage() {
               className='pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 w-full'
             />
           </div>
+
+          <div className='flex items-center gap-2'>
+            <Filter className='h-4 w-4 text-purple-600' />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
+              <option value='all'>Todos los estados</option>
+              <option value='pendiente'>Pendiente</option>
+              <option value='aprobado'>Aprobado</option>
+              <option value='rechazado'>Rechazado</option>
+            </select>
+          </div>
+
           <Badge variant='default' className='py-1.5'>
             {filteredChapters.length} capítulos encontrados
           </Badge>
