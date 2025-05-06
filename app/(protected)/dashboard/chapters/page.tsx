@@ -22,6 +22,8 @@ import {
   BookOpen,
   Tag,
   Clock,
+  BookMarked,
+  BookCopy,
 } from "lucide-react";
 
 // Ajusta este tipo según la información real que te devuelva el backend
@@ -32,6 +34,7 @@ type Chapter = {
   status: string;
   bookTitle?: string;
   bookId?: string;
+  bookType?: string; // Añadido para distinguir entre tipos de libros
   createdAt?: string;
   updatedAt?: string;
 };
@@ -44,6 +47,7 @@ export default function ChaptersPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [studyTypeFilter, setStudyTypeFilter] = useState<string>("all");
+  const [bookTypeFilter, setBookTypeFilter] = useState<string>("all"); // Nuevo filtro para tipo de libro
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
   const handleMouseEnter = (id: string) => {
@@ -73,7 +77,27 @@ export default function ChaptersPage() {
         const data = await res.json();
         // Asegúrate de que 'data' sea un arreglo o extrae la propiedad necesaria
         const chaptersArray = Array.isArray(data) ? data : data.chapters ?? [];
-        setChapters(chaptersArray);
+
+        // Para propósitos de demostración, asignamos tipos de libro aleatorios
+        // En producción, esto vendría del backend
+        interface ChapterWithBookType extends Chapter {
+          bookType: string;
+        }
+
+        interface ChapterWithBookType extends Chapter {
+          bookType: string;
+        }
+
+        const chaptersWithBookTypes: ChapterWithBookType[] = chaptersArray.map(
+          (chapter: Chapter): ChapterWithBookType => ({
+            ...chapter,
+            bookType:
+              chapter.bookType ||
+              (Math.random() > 0.5 ? "personalizado" : "edición"),
+          })
+        );
+
+        setChapters(chaptersWithBookTypes);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -94,6 +118,11 @@ export default function ChaptersPage() {
     new Set(chapters.map((chapter) => chapter.status))
   ).filter(Boolean);
 
+  // Obtener los tipos de libro únicos para el filtro
+  const uniqueBookTypes = Array.from(
+    new Set(chapters.map((chapter) => chapter.bookType))
+  ).filter(Boolean);
+
   // Filtrar capítulos por búsqueda y filtros
   const filteredChapters = chapters.filter((chapter) => {
     // Filtro por término de búsqueda
@@ -109,7 +138,13 @@ export default function ChaptersPage() {
     const matchesStudyType =
       studyTypeFilter === "all" || chapter.studyType === studyTypeFilter;
 
-    return matchesSearch && matchesStatus && matchesStudyType;
+    // Filtro por tipo de libro
+    const matchesBookType =
+      bookTypeFilter === "all" || chapter.bookType === bookTypeFilter;
+
+    return (
+      matchesSearch && matchesStatus && matchesStudyType && matchesBookType
+    );
   });
 
   // Función para obtener el color del badge según el estado
@@ -134,6 +169,30 @@ export default function ChaptersPage() {
         return "destructive";
       default:
         return "outline";
+    }
+  };
+
+  // Función para obtener el color del badge según el tipo de libro
+  const getBookTypeBadgeVariant = (bookType: string) => {
+    switch (bookType.toLowerCase()) {
+      case "personalizado":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "edición":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  // Función para obtener el icono según el tipo de libro
+  const getBookTypeIcon = (bookType: string) => {
+    switch (bookType.toLowerCase()) {
+      case "personalizado":
+        return <BookMarked className='h-4 w-4 mr-1' />;
+      case "edición":
+        return <BookCopy className='h-4 w-4 mr-1' />;
+      default:
+        return <BookOpen className='h-4 w-4 mr-1' />;
     }
   };
 
@@ -238,7 +297,33 @@ export default function ChaptersPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className='flex flex-col md:flex-row gap-4 mb-6'>
+          className='flex flex-col md:flex-row gap-4 mb-6 flex-wrap'>
+          {/* Nuevo filtro por tipo de libro */}
+          <div className='flex items-center gap-2'>
+            <BookOpen className='h-4 w-4 text-purple-600' />
+            <span className='text-sm font-medium text-gray-700'>
+              Filtrar por tipo de libro:
+            </span>
+            <select
+              value={bookTypeFilter}
+              onChange={(e) => setBookTypeFilter(e.target.value)}
+              className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
+              <option value='all'>Todos los libros</option>
+              <option value='personalizado'>Libros Personalizados</option>
+              <option value='edición'>Libros de Edición</option>
+              {uniqueBookTypes
+                .filter(
+                  (type) => type !== "personalizado" && type !== "edición"
+                )
+                .map((type) => (
+                  <option key={type} value={type}>
+                    {(type ?? "").charAt(0).toUpperCase() +
+                      (type ?? "").slice(1)}
+                  </option>
+                ))}
+            </select>
+          </div>
+
           <div className='flex items-center gap-2'>
             <Filter className='h-4 w-4 text-purple-600' />
             <span className='text-sm font-medium text-gray-700'>
@@ -290,7 +375,9 @@ export default function ChaptersPage() {
               <p className='text-gray-500 mb-6'>
                 {searchTerm
                   ? "No se encontraron capítulos que coincidan con tu búsqueda."
-                  : statusFilter !== "all" || studyTypeFilter !== "all"
+                  : statusFilter !== "all" ||
+                    studyTypeFilter !== "all" ||
+                    bookTypeFilter !== "all"
                   ? "No hay capítulos que coincidan con los filtros seleccionados."
                   : "No hay capítulos registrados."}
               </p>
@@ -326,6 +413,16 @@ export default function ChaptersPage() {
                         <Tag className='h-3 w-3 mr-1' />
                         {chapter.studyType || "Sin tipo"}
                       </Badge>
+                      {/* Badge para tipo de libro */}
+                      {chapter.bookType && (
+                        <Badge
+                          variant='outline'
+                          className={getBookTypeBadgeVariant(chapter.bookType)}>
+                          {getBookTypeIcon(chapter.bookType)}
+                          {chapter.bookType.charAt(0).toUpperCase() +
+                            chapter.bookType.slice(1)}
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className='pt-2'>
@@ -388,6 +485,7 @@ export default function ChaptersPage() {
                     <th className='px-4 py-3 text-left'>Título</th>
                     <th className='px-4 py-3 text-left'>Tipo de Estudio</th>
                     <th className='px-4 py-3 text-left'>Estado</th>
+                    <th className='px-4 py-3 text-left'>Tipo de Libro</th>
                     <th className='px-4 py-3 text-left'>Libro</th>
                     <th className='px-4 py-3 text-center'>Acciones</th>
                   </tr>
@@ -422,6 +520,22 @@ export default function ChaptersPage() {
                         <Badge variant={getStatusBadgeVariant(chapter.status)}>
                           {chapter.status}
                         </Badge>
+                      </td>
+                      {/* Nueva columna para tipo de libro */}
+                      <td className='px-4 py-3'>
+                        {chapter.bookType ? (
+                          <Badge
+                            variant='outline'
+                            className={getBookTypeBadgeVariant(
+                              chapter.bookType
+                            )}>
+                            {getBookTypeIcon(chapter.bookType)}
+                            {chapter.bookType.charAt(0).toUpperCase() +
+                              chapter.bookType.slice(1)}
+                          </Badge>
+                        ) : (
+                          <span className='text-sm text-gray-500'>-</span>
+                        )}
                       </td>
                       <td className='px-4 py-3'>
                         {chapter.bookTitle ? (
