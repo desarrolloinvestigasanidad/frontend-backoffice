@@ -29,10 +29,7 @@ import {
   AlertCircle,
   Search,
   ArrowLeft,
-  Edit,
   Trash2,
-  Eye,
-  BookText,
   FileEdit,
   Filter,
   LayoutGrid,
@@ -71,13 +68,12 @@ type BookT = {
 };
 
 /* ---------------------------------------------------------------------- */
-/*  Page component                                                         */
+/*  Page component                                                        */
 /* ---------------------------------------------------------------------- */
 
 export default function BookChaptersPage() {
-  const params = useParams();
+  const { id: bookId } = useParams();
   const router = useRouter();
-  const bookId = params.id as string;
 
   const [book, setBook] = useState<BookT | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -90,77 +86,45 @@ export default function BookChaptersPage() {
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
-  const [selectedCover, setSelectedCover] = useState<string>("");
 
-  /* -------------------------------------------------------------------- */
-  /*  Hover helpers                                                       */
-  /* -------------------------------------------------------------------- */
   const handleMouseEnter = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: true }));
   const handleMouseLeave = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: false }));
 
-  /* -------------------------------------------------------------------- */
-  /*  Data fetchers                                                       */
-  /* -------------------------------------------------------------------- */
   useEffect(() => {
-    const fetchBookDetails = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+    const token = localStorage.getItem("token");
+    // fetch book
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
         if (!res.ok) throw new Error("Error al cargar detalles del libro");
-        setBook(await res.json());
-      } catch (err: any) {
-        setError(err.message);
-      }
-    };
+        return res.json();
+      })
+      .then(setBook)
+      .catch((err) => setError(err.message));
 
-    const fetchChapters = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/chapters`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+    // fetch chapters
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/chapters`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
         if (!res.ok) throw new Error("Error al cargar capítulos");
-        const data = await res.json();
-        setChapters(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookDetails();
-    fetchChapters();
+        return res.json();
+      })
+      .then((data) => setChapters(Array.isArray(data) ? data : []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [bookId]);
 
-  /* -------------------------------------------------------------------- */
-  /*  Generate book handler                                               */
-  /* -------------------------------------------------------------------- */
-  const handleGenerateBook = async () => {
-    // Mostrar modal de selección de portada en lugar de generar directamente
-    setShowCoverModal(true);
-  };
+  const handleGenerateBook = () => setShowCoverModal(true);
 
-  // Nueva función para continuar con la generación después de seleccionar portada
   const handleContinueGeneration = async (coverUrl: string) => {
     setShowCoverModal(false);
-    setSelectedCover(coverUrl);
     setGenerating(true);
-
     try {
       const token = localStorage.getItem("token");
-
-      // Incluir la URL de la portada en la petición
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
         {
@@ -172,13 +136,14 @@ export default function BookChaptersPage() {
           body: JSON.stringify({ coverUrl }),
         }
       );
-
       if (!res.ok) throw new Error("No se pudo generar el libro");
       const { url } = await res.json();
-      const fullUrl = url.startsWith("http")
-        ? url
-        : `${process.env.NEXT_PUBLIC_BACKOFFICE_URL!}${url}`;
-      window.open(fullUrl, "_blank");
+      window.open(
+        url.startsWith("http")
+          ? url
+          : `${process.env.NEXT_PUBLIC_BACKOFFICE_URL}${url}`,
+        "_blank"
+      );
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -186,17 +151,12 @@ export default function BookChaptersPage() {
     }
   };
 
-  /* -------------------------------------------------------------------- */
-  /*  Helpers                                                             */
-  /* -------------------------------------------------------------------- */
+  // filtros y orden
   const filteredChapters = chapters
-    .filter((c) => {
-      const matchesSearch = c.title
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
+    .filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((c) =>
+      statusFilter === "all" ? true : c.status.toLowerCase() === statusFilter
+    )
     .sort((a, b) =>
       sortOrder === "asc"
         ? a.title.localeCompare(b.title)
@@ -220,12 +180,11 @@ export default function BookChaptersPage() {
       month: "2-digit",
       year: "numeric",
     }).format(new Date(iso));
+
   const allApproved =
     chapters.length > 0 &&
     chapters.every((c) => c.status.toLowerCase() === "aprobado");
-  /* -------------------------------------------------------------------- */
-  /*  Loading state                                                       */
-  /* -------------------------------------------------------------------- */
+
   if (loading) {
     return (
       <div className='relative overflow-hidden min-h-screen py-8'>
@@ -243,19 +202,12 @@ export default function BookChaptersPage() {
       </div>
     );
   }
-  // Determina si todos los capítulos están aprobados
 
-  /* -------------------------------------------------------------------- */
-  /*  Render                                                              */
-  /* -------------------------------------------------------------------- */
   return (
     <div className='relative overflow-hidden min-h-screen py-8'>
       <BackgroundBlobs />
-
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
-        {/* ---------------------------------------------------------------- *
-         * Header + actions                                                 *
-         * ---------------------------------------------------------------- */}
+        {/* Header + acciones */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -269,7 +221,6 @@ export default function BookChaptersPage() {
               onClick={() => router.back()}>
               <ArrowLeft className='mr-2 h-4 w-4' /> Volver
             </Button>
-
             <Breadcrumb
               items={[
                 { href: "/dashboard", label: "Dashboard" },
@@ -284,7 +235,6 @@ export default function BookChaptersPage() {
           </div>
 
           <div className='flex flex-wrap gap-3'>
-            {/* Crear capítulo */}
             <Link href={`/dashboard/books/${bookId}/chapters/new`}>
               <Button
                 className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
@@ -299,7 +249,6 @@ export default function BookChaptersPage() {
               </Button>
             </Link>
 
-            {/* Generar libro */}
             <div className='relative'>
               <Button
                 disabled={generating || !allApproved}
@@ -311,23 +260,20 @@ export default function BookChaptersPage() {
                   className='flex items-center'
                   animate={{ x: hoverStates["generateBook"] ? 3 : 0 }}
                   transition={{ duration: 0.2 }}>
-                  <Book className='mr-2 h-4 w-4' />{" "}
+                  <Book className='mr-2 h-4 w-4' />
                   {generating ? "Generando…" : "Generar Libro"}
                 </motion.span>
               </Button>
               {!allApproved && (
-                <p className='text-xs text-red-500 mb-1'>
-                  Debes aprobar todos los capítulos <br />
-                  antes de generar el libro.
+                <p className='text-xs text-red-500 mt-1'>
+                  Debes aprobar todos los capítulos antes de generar.
                 </p>
               )}
             </div>
           </div>
         </motion.div>
 
-        {/* ---------------------------------------------------------------- *
-         * Book info                                                        *
-         * ---------------------------------------------------------------- */}
+        {/* Book info */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -336,13 +282,11 @@ export default function BookChaptersPage() {
           <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
             Capítulos de {book?.title ?? "Libro"}
           </h2>
-
           {book?.subtitle && (
             <p className='text-gray-600 text-sm md:text-base mb-2'>
               {book.subtitle}
             </p>
           )}
-
           <div className='flex items-center justify-center gap-3 mb-4'>
             <Badge
               variant={
@@ -357,13 +301,9 @@ export default function BookChaptersPage() {
               {book?.status ?? "En desarrollo"}
             </Badge>
           </div>
-
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto' />
         </motion.div>
 
-        {/* ---------------------------------------------------------------- *
-         * Errores                                                          *
-         * ---------------------------------------------------------------- */}
         {error && (
           <Alert className='bg-red-50 border-red-200 text-red-800 mb-6'>
             <AlertCircle className='h-4 w-4 text-red-600' />
@@ -371,9 +311,7 @@ export default function BookChaptersPage() {
           </Alert>
         )}
 
-        {/* ---------------------------------------------------------------- *
-         * Search + view toggles                                            *
-         * ---------------------------------------------------------------- */}
+        {/* Controles: búsqueda, vista, filtros */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -392,10 +330,8 @@ export default function BookChaptersPage() {
 
           <div className='flex items-center gap-3'>
             <Badge variant='default' className='py-1.5'>
-              {filteredChapters.length} capítulos encontrados
+              {filteredChapters.length} capítulos
             </Badge>
-
-            {/* Vista grid/list */}
             <div className='flex items-center border rounded-lg overflow-hidden'>
               <button
                 onClick={() => setViewMode("grid")}
@@ -421,84 +357,63 @@ export default function BookChaptersPage() {
           </div>
         </motion.div>
 
-        {/* ---------------------------------------------------------------- *
-         * Filtros                                                          *
-         * ---------------------------------------------------------------- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           className='flex flex-col md:flex-row gap-4 mb-6'>
-          {/* Filtro de estado */}
-          <div className='flex items-center gap-2'>
-            <Filter className='h-4 w-4 text-purple-600' />
-            <span className='text-sm font-medium text-gray-700'>
-              Filtrar por estado:
-            </span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
-              <option value='all'>Todos los estados</option>
-              <option value='pendiente'>Pendiente</option>
-
-              <option value='aprobado'>Aprobado</option>
-              <option value='rechazado'>Rechazado</option>
-            </select>
-          </div>
-
-          {/* Orden A–Z / Z–A */}
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm'>
-              {sortOrder === "asc" ? (
-                <>
-                  <SortAsc className='h-4 w-4 text-purple-600' />
-                  <span>A-Z</span>
-                </>
-              ) : (
-                <>
-                  <SortDesc className='h-4 w-4 text-purple-600' />
-                  <span>Z-A</span>
-                </>
-              )}
-            </button>
-          </div>
+          <Filter className='h-4 w-4 text-purple-600' />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
+            <option value='all'>Todos los estados</option>
+            <option value='pendiente'>Pendiente</option>
+            <option value='aprobado'>Aprobado</option>
+            <option value='rechazado'>Rechazado</option>
+          </select>
+          <button
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className='flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm'>
+            {sortOrder === "asc" ? (
+              <>
+                <SortAsc className='h-4 w-4 text-purple-600' />
+                <span>A–Z</span>
+              </>
+            ) : (
+              <>
+                <SortDesc className='h-4 w-4 text-purple-600' />
+                <span>Z–A</span>
+              </>
+            )}
+          </button>
         </motion.div>
 
-        {/* ---------------------------------------------------------------- *
-         * Contenido principal                                              *
-         * ---------------------------------------------------------------- */}
+        {/* Contenido */}
         {filteredChapters.length === 0 ? (
-          /* ----------------------------- 0 chapters --------------------- */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50 text-center'>
-            <div className='flex flex-col items-center justify-center p-8'>
-              <FileText className='w-16 h-16 text-purple-300 mb-4' />
-              <h3 className='text-xl font-semibold text-gray-700 mb-2'>
-                No se encontraron capítulos
-              </h3>
-              <p className='text-gray-500 mb-6'>
-                {searchTerm
-                  ? "No se encontraron capítulos que coincidan con tu búsqueda."
-                  : statusFilter !== "all"
-                  ? `No hay capítulos con estado "${statusFilter}".`
-                  : "Este libro aún no tiene capítulos."}
-              </p>
-
-              <Link href={`/dashboard/books/${bookId}/chapters/new`}>
-                <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
-                  <Plus className='mr-2 h-4 w-4' /> Crear Primer Capítulo
-                </Button>
-              </Link>
-            </div>
+            <FileText className='w-16 h-16 text-purple-300 mb-4' />
+            <h3 className='text-xl font-semibold text-gray-700 mb-2'>
+              No se encontraron capítulos
+            </h3>
+            <p className='text-gray-500 mb-6'>
+              {searchTerm
+                ? "No hay coincidencias para tu búsqueda."
+                : statusFilter !== "all"
+                ? `Ningún capítulo en estado “${statusFilter}”.`
+                : "Este libro aún no tiene capítulos."}
+            </p>
+            <Link href={`/dashboard/books/${bookId}/chapters/new`}>
+              <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                <Plus className='mr-2 h-4 w-4' /> Crear Capítulo
+              </Button>
+            </Link>
           </motion.div>
         ) : viewMode === "grid" ? (
-          /* ---------------------------- GRID view ----------------------- */
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {filteredChapters.map((chapter, idx) => (
               <motion.div
@@ -513,92 +428,58 @@ export default function BookChaptersPage() {
                     </CardTitle>
                     <div className='flex items-center gap-2 flex-wrap'>
                       <Badge variant={getStatusBadgeVariant(chapter.status)}>
-                        {chapter.status ?? "Borrador"}
+                        {chapter.status}
                       </Badge>
                       <Badge
                         variant='outline'
                         className='bg-purple-50 text-purple-700'>
-                        {chapter.studyType ?? "Estudio"}
+                        {chapter.studyType}
                       </Badge>
                     </div>
                   </CardHeader>
 
-                  <CardContent className='pt-2'>
-                    <div className='space-y-3'>
-                      <div className='flex items-center text-sm text-gray-600'>
-                        <BookText className='h-4 w-4 mr-2 text-purple-600' />
-                        <span className='font-medium'>Metodología:</span>
-                        <span className='ml-2 line-clamp-1'>
-                          {chapter.methodology ?? "No especificada"}
-                        </span>
-                      </div>
-                      <div className='flex items-center text-sm text-gray-600'>
-                        <Calendar className='h-4 w-4 mr-2 text-purple-600' />
-                        <span className='font-medium'>Creado:</span>
-                        <span className='ml-2'>
-                          {formatDate(chapter.createdAt)}
-                        </span>
-                      </div>
-                      <div className='flex items-center text-sm text-gray-600'>
-                        <Clock className='h-4 w-4 mr-2 text-purple-600' />
-                        <span className='font-medium'>Actualizado:</span>
-                        <span className='ml-2'>
-                          {formatDate(chapter.updatedAt)}
-                        </span>
-                      </div>
-                      <div className='flex items-center text-sm text-gray-600'>
-                        <User className='h-4 w-4 mr-2 text-purple-600' />
-                        <span className='font-medium'>ID Autor:</span>
-                        <span className='ml-2 line-clamp-1'>
-                          {chapter.authorId ?? "No asignado"}
-                        </span>
-                      </div>
+                  <CardContent className='pt-2 space-y-3'>
+                    <div className='flex items-center text-sm text-gray-600'>
+                      <BookOpen className='h-4 w-4 mr-2 text-purple-600' />
+                      <span className='font-medium'>Metodología:</span>
+                      <span className='ml-2 line-clamp-1'>
+                        {chapter.methodology}
+                      </span>
+                    </div>
+                    <div className='flex items-center text-sm text-gray-600'>
+                      <Calendar className='h-4 w-4 mr-2 text-purple-600' />
+                      <span className='font-medium'>Creado:</span>
+                      <span className='ml-2'>
+                        {formatDate(chapter.createdAt)}
+                      </span>
+                    </div>
+                    <div className='flex items-center text-sm text-gray-600'>
+                      <Clock className='h-4 w-4 mr-2 text-purple-600' />
+                      <span className='font-medium'>Actualizado:</span>
+                      <span className='ml-2'>
+                        {formatDate(chapter.updatedAt)}
+                      </span>
+                    </div>
+                    <div className='flex items-center text-sm text-gray-600'>
+                      <User className='h-4 w-4 mr-2 text-purple-600' />
+                      <span className='font-medium'>Autor:</span>
+                      <span className='ml-2'>{chapter.authorId}</span>
                     </div>
                   </CardContent>
 
                   <CardFooter className='flex justify-between pt-2'>
-                    <Link
-                      href={`/dashboard/books/${bookId}/chapters/${chapter.id}`}>
+                    <Link href={`/dashboard/chapters/${chapter.id}/edit`}>
                       <Button
                         variant='outline'
                         size='sm'
                         className='border-purple-200 text-purple-700 hover:bg-purple-50'
-                        onMouseEnter={() =>
-                          handleMouseEnter(`view-${chapter.id}`)
-                        }
-                        onMouseLeave={() =>
-                          handleMouseLeave(`view-${chapter.id}`)
-                        }>
+                        onMouseEnter={() => handleMouseEnter(chapter.id)}
+                        onMouseLeave={() => handleMouseLeave(chapter.id)}>
                         <motion.span
                           className='flex items-center'
-                          animate={{
-                            x: hoverStates[`view-${chapter.id}`] ? 2 : 0,
-                          }}
+                          animate={{ x: hoverStates[chapter.id] ? 2 : 0 }}
                           transition={{ duration: 0.2 }}>
-                          <Eye className='mr-1 h-4 w-4' /> Ver Detalles
-                        </motion.span>
-                      </Button>
-                    </Link>
-
-                    <Link
-                      href={`/dashboard/books/${bookId}/chapters/${chapter.id}/edit`}>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                        onMouseEnter={() =>
-                          handleMouseEnter(`edit-${chapter.id}`)
-                        }
-                        onMouseLeave={() =>
-                          handleMouseLeave(`edit-${chapter.id}`)
-                        }>
-                        <motion.span
-                          className='flex items-center'
-                          animate={{
-                            x: hoverStates[`edit-${chapter.id}`] ? 2 : 0,
-                          }}
-                          transition={{ duration: 0.2 }}>
-                          <FileEdit className='mr-1 h-4 w-4' /> Editar
+                          <FileEdit className='mr-1 h-4 w-4' /> Revisar capítulo
                         </motion.span>
                       </Button>
                     </Link>
@@ -608,88 +489,71 @@ export default function BookChaptersPage() {
             ))}
           </div>
         ) : (
-          /* ----------------------------- LIST view ---------------------- */
           <div className='overflow-hidden rounded-xl border border-white/50 backdrop-blur-sm bg-white/80 shadow-lg'>
-            <div className='overflow-x-auto'>
-              <table className='w-full'>
-                <thead className='bg-purple-50 text-purple-900'>
-                  <tr>
-                    <th className='px-4 py-3 text-left'>Título</th>
-                    <th className='px-4 py-3 text-left'>Tipo de Estudio</th>
-                    <th className='px-4 py-3 text-left'>Estado</th>
-                    <th className='px-4 py-3 text-left'>Actualizado</th>
-                    <th className='px-4 py-3 text-center'>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-gray-100'>
-                  {filteredChapters.map((chapter) => (
-                    <tr
-                      key={chapter.id}
-                      className='hover:bg-purple-50/50 transition-colors'>
-                      <td className='px-4 py-4'>
-                        <p className='font-medium text-gray-900'>
-                          {chapter.title}
-                        </p>
-                        <p className='text-xs text-gray-500'>
-                          ID: {chapter.id}
-                        </p>
-                      </td>
-                      <td className='px-4 py-4'>
-                        <Badge
-                          variant='outline'
-                          className='bg-purple-50 text-purple-700'>
-                          {chapter.studyType ?? "No especificado"}
-                        </Badge>
-                      </td>
-                      <td className='px-4 py-4'>
-                        <Badge variant={getStatusBadgeVariant(chapter.status)}>
-                          {chapter.status ?? "Borrador"}
-                        </Badge>
-                      </td>
-                      <td className='px-4 py-4'>
-                        <p className='text-sm'>
-                          {formatDate(chapter.updatedAt)}
-                        </p>
-                      </td>
-                      <td className='px-4 py-4 text-center'>
-                        <div className='flex justify-center gap-2'>
-                          <Link
-                            href={`/dashboard/books/${bookId}/chapters/${chapter.id}`}>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              className='border-purple-200 text-purple-700 hover:bg-purple-50'>
-                              <Eye className='mr-1 h-4 w-4' /> Ver
-                            </Button>
-                          </Link>
-                          <Link
-                            href={`/dashboard/books/${bookId}/chapters/${chapter.id}/edit`}>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              className='border-blue-200 text-blue-700 hover:bg-blue-50'>
-                              <Edit className='mr-1 h-4 w-4' /> Editar
-                            </Button>
-                          </Link>
+            <table className='w-full'>
+              <thead className='bg-purple-50 text-purple-900'>
+                <tr>
+                  <th className='px-4 py-3 text-left'>Título</th>
+                  <th className='px-4 py-3 text-left'>Estudio</th>
+                  <th className='px-4 py-3 text-left'>Estado</th>
+                  <th className='px-4 py-3 text-left'>Actualizado</th>
+                  <th className='px-4 py-3 text-center'>Acciones</th>
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-gray-100'>
+                {filteredChapters.map((chapter) => (
+                  <tr
+                    key={chapter.id}
+                    className='hover:bg-purple-50/50 transition-colors'>
+                    <td className='px-4 py-4'>
+                      <p className='font-medium text-gray-900'>
+                        {chapter.title}
+                      </p>
+                      <p className='text-xs text-gray-500'>ID: {chapter.id}</p>
+                    </td>
+                    <td className='px-4 py-4'>
+                      <Badge
+                        variant='outline'
+                        className='bg-purple-50 text-purple-700'>
+                        {chapter.studyType}
+                      </Badge>
+                    </td>
+                    <td className='px-4 py-4'>
+                      <Badge variant={getStatusBadgeVariant(chapter.status)}>
+                        {chapter.status}
+                      </Badge>
+                    </td>
+                    <td className='px-4 py-4'>
+                      <p className='text-sm'>{formatDate(chapter.updatedAt)}</p>
+                    </td>
+                    <td className='px-4 py-4 text-center'>
+                      <div className='flex justify-center gap-2'>
+                        <Link href={`/dashboard/chapters/${chapter.id}/edit`}>
                           <Button
                             variant='outline'
                             size='sm'
-                            className='border-red-200 text-red-700 hover:bg-red-50'
-                            onClick={() =>
-                              alert(`Eliminar capítulo: ${chapter.id}`)
-                            }>
-                            <Trash2 className='mr-1 h-4 w-4' /> Eliminar
+                            className='border-purple-200 text-purple-700 hover:bg-purple-50'>
+                            <FileEdit className='mr-1 h-4 w-4' /> Abrir
                           </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </Link>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='border-red-200 text-red-700 hover:bg-red-50'
+                          onClick={() =>
+                            alert(`Eliminar capítulo: ${chapter.id}`)
+                          }>
+                          <Trash2 className='mr-1 h-4 w-4' /> Eliminar
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-        {/* Modal de selección de portada */}
+
         <BookCoverModal
           isOpen={showCoverModal}
           onClose={() => setShowCoverModal(false)}
