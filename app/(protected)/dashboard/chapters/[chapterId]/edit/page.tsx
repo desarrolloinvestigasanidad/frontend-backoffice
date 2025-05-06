@@ -449,9 +449,7 @@ export default function EditChapterPage() {
                       <SelectValue placeholder='Selecciona el estado' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='borrador'>Borrador</SelectItem>
                       <SelectItem value='pendiente'>Pendiente</SelectItem>
-                      <SelectItem value='en revisión'>En Revisión</SelectItem>
                       <SelectItem value='aprobado'>Aprobado</SelectItem>
                       <SelectItem value='publicado'>Publicado</SelectItem>
                       <SelectItem value='rechazado'>Rechazado</SelectItem>
