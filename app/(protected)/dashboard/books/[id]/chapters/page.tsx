@@ -207,8 +207,7 @@ export default function BookChaptersPage() {
     status: string
   ): "outline" | "default" | "secondary" | "destructive" => {
     const map = {
-      borrador: "outline",
-      revisión: "default",
+      pendiente: "default",
       aprobado: "secondary",
       rechazado: "destructive",
     } as const;
@@ -221,7 +220,9 @@ export default function BookChaptersPage() {
       month: "2-digit",
       year: "numeric",
     }).format(new Date(iso));
-
+  const allApproved =
+    chapters.length > 0 &&
+    chapters.every((c) => c.status.toLowerCase() === "aprobado");
   /* -------------------------------------------------------------------- */
   /*  Loading state                                                       */
   /* -------------------------------------------------------------------- */
@@ -242,6 +243,7 @@ export default function BookChaptersPage() {
       </div>
     );
   }
+  // Determina si todos los capítulos están aprobados
 
   /* -------------------------------------------------------------------- */
   /*  Render                                                              */
@@ -298,20 +300,28 @@ export default function BookChaptersPage() {
             </Link>
 
             {/* Generar libro */}
-            <Button
-              disabled={generating}
-              className='bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900'
-              onMouseEnter={() => handleMouseEnter("generateBook")}
-              onMouseLeave={() => handleMouseLeave("generateBook")}
-              onClick={handleGenerateBook}>
-              <motion.span
-                className='flex items-center'
-                animate={{ x: hoverStates["generateBook"] ? 3 : 0 }}
-                transition={{ duration: 0.2 }}>
-                <Book className='mr-2 h-4 w-4' />{" "}
-                {generating ? "Generando…" : "Generar Libro"}
-              </motion.span>
-            </Button>
+            <div className='relative'>
+              <Button
+                disabled={generating || !allApproved}
+                className='bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900'
+                onMouseEnter={() => handleMouseEnter("generateBook")}
+                onMouseLeave={() => handleMouseLeave("generateBook")}
+                onClick={handleGenerateBook}>
+                <motion.span
+                  className='flex items-center'
+                  animate={{ x: hoverStates["generateBook"] ? 3 : 0 }}
+                  transition={{ duration: 0.2 }}>
+                  <Book className='mr-2 h-4 w-4' />{" "}
+                  {generating ? "Generando…" : "Generar Libro"}
+                </motion.span>
+              </Button>
+              {!allApproved && (
+                <p className='text-xs text-red-500 mb-1'>
+                  Debes aprobar todos los capítulos <br />
+                  antes de generar el libro.
+                </p>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -430,8 +440,8 @@ export default function BookChaptersPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
               <option value='all'>Todos los estados</option>
-              <option value='borrador'>Borrador</option>
-              <option value='revisión'>En revisión</option>
+              <option value='pendiente'>Pendiente</option>
+
               <option value='aprobado'>Aprobado</option>
               <option value='rechazado'>Rechazado</option>
             </select>
