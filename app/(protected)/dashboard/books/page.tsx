@@ -42,6 +42,7 @@ type Book = {
   bookType: string;
   editionId?: string;
   editionTitle?: string;
+  status?: "pendiente" | "revisión" | "aprobado" | "rechazado";
 };
 
 type Edition = {
@@ -60,6 +61,7 @@ export default function BooksPage() {
     "all" | "personal" | "edition"
   >("all");
   const [editionFilter, setEditionFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
   const handleMouseEnter = (id: string) => {
@@ -144,8 +146,30 @@ export default function BooksPage() {
       matchesEdition = book.editionId === editionFilter;
     }
 
-    return matchesSearch && matchesType && matchesEdition;
+    // Filtro por estado
+    let matchesStatus = true;
+    if (statusFilter !== "all") {
+      matchesStatus = book.status === statusFilter;
+    }
+
+    return matchesSearch && matchesType && matchesEdition && matchesStatus;
   });
+
+  // Función para obtener el color del badge según el estado
+  const getStatusBadgeVariant = (status?: string) => {
+    switch (status) {
+      case "pendiente":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "revisión":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "aprobado":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "rechazado":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
 
   if (loading) {
     return (
@@ -317,6 +341,24 @@ export default function BooksPage() {
               </select>
             </div>
           )}
+
+          {/* Filtro por estado */}
+          <div className='flex items-center gap-2'>
+            <Filter className='h-4 w-4 text-purple-600' />
+            <span className='text-sm font-medium text-gray-700'>
+              Filtrar por estado:
+            </span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
+              <option value='all'>Todos los estados</option>
+              <option value='pendiente'>Pendiente</option>
+              <option value='revisión'>Revisión</option>
+              <option value='aprobado'>Aprobado</option>
+              <option value='rechazado'>Rechazado</option>
+            </select>
+          </div>
         </motion.div>
 
         {filteredBooks.length === 0 ? (
@@ -339,6 +381,8 @@ export default function BooksPage() {
                   ? editionFilter !== "all"
                     ? "No hay libros en esta edición."
                     : "No hay libros de edición registrados."
+                  : statusFilter !== "all"
+                  ? `No hay libros con estado "${statusFilter}".`
                   : "No hay libros registrados."}
               </p>
               <Link href='/dashboard/books/new'>
@@ -388,6 +432,14 @@ export default function BooksPage() {
                         {book.bookType === "libro propio"
                           ? "Personalizado"
                           : "Edición"}
+                      </Badge>
+                      {/* Badge de estado */}
+                      <Badge
+                        className={`${getStatusBadgeVariant(
+                          book.status
+                        )} ml-auto`}
+                        variant='outline'>
+                        {book.status || "Sin estado"}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -504,6 +556,7 @@ export default function BooksPage() {
                     <th className='px-4 py-3 text-left'>Tipo</th>
                     <th className='px-4 py-3 text-left'>Edición</th>
                     <th className='px-4 py-3 text-left'>Precio</th>
+                    <th className='px-4 py-3 text-left'>Estado</th>
                     <th className='px-4 py-3 text-center'>Acciones</th>
                   </tr>
                 </thead>
@@ -576,6 +629,13 @@ export default function BooksPage() {
                             ? "-"
                             : Number(book.price).toFixed(2)}
                           €
+                        </Badge>
+                      </td>
+                      <td className='px-4 py-4'>
+                        <Badge
+                          className={getStatusBadgeVariant(book.status)}
+                          variant='outline'>
+                          {book.status || "Sin estado"}
                         </Badge>
                       </td>
                       <td className='px-4 py-4 text-center'>
