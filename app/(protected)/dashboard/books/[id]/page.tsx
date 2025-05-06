@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,6 +56,13 @@ export default function BookDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [editionTitle, setEditionTitle] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
+
+  // Modificar los estados para manejar el tipo de archivo
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<"image" | "pdf" | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -133,6 +140,78 @@ export default function BookDetailPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  // Reemplazar la función handleFileChange para detectar el tipo de archivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if file is an image or PDF
+    if (file.type.match("image.*")) {
+      setFileType("image");
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCoverPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setCoverFile(file);
+    } else if (file.type === "application/pdf") {
+      setFileType("pdf");
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCoverPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setCoverFile(file);
+    } else {
+      setMessage("Solo se permiten imágenes o archivos PDF");
+      setMessageType("error");
+      setFileType(null);
+      setCoverPreview(null);
+      setCoverFile(null);
+    }
+  };
+
+  const handleUploadCover = async () => {
+    if (!coverFile) return;
+
+    setUploadingCover(true);
+    setMessage("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("cover", coverFile);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/cover`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Error al subir la portada");
+      }
+
+      const { coverUrl } = await res.json();
+      setFormData((prev: any) => ({ ...prev, cover: coverUrl }));
+      setCoverFile(null);
+      setCoverPreview(null);
+
+      setMessageType("success");
+      setMessage("Portada subida correctamente");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (error: any) {
+      setMessageType("error");
+      setMessage(error.message);
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   const handleSave = async () => {
@@ -214,6 +293,16 @@ export default function BookDetailPage() {
 
   // Check if the book is an edition book
   const isEditionBook = formData.bookType === "libro edición";
+
+  const isPdfUrl = (url: string | undefined): boolean => {
+    if (!url) return false;
+
+    // Intentar extraer el nombre del archivo antes de los parámetros de consulta
+    const urlWithoutParams = url.split("?")[0];
+
+    // Verificar si contiene .pdf en la parte del path (no solo al final)
+    return urlWithoutParams.toLowerCase().includes(".pdf");
+  };
 
   if (loading) {
     return (
@@ -346,14 +435,54 @@ export default function BookDetailPage() {
                 </div>
               </CardHeader>
               <CardContent className='flex flex-col items-center'>
+                {/* Reemplazar el bloque de visualización de la portada en CardContent */}
                 <div className='relative w-full h-[400px] rounded-md overflow-hidden bg-gray-100 mb-6'>
-                  {formData.cover ? (
+                  {coverPreview && fileType === "image" ? (
                     <Image
-                      src={formData.cover || "/placeholder.svg"}
-                      alt={`Portada de ${formData.title}`}
+                      src={coverPreview || "/placeholder.svg"}
+                      alt={`Vista previa de portada para ${formData.title}`}
                       fill
                       className='object-cover'
                     />
+                  ) : coverPreview && fileType === "pdf" ? (
+                    <div className='w-full h-full flex flex-col items-center justify-center'>
+                      <object
+                        data={coverPreview}
+                        type='application/pdf'
+                        width='100%'
+                        height='100%'
+                        className='w-full h-full'>
+                        <div className='flex flex-col items-center justify-center h-full'>
+                          <BookOpen className='h-16 w-16 text-purple-600 mb-2' />
+                          <p className='text-purple-700 font-medium'>
+                            Vista previa de PDF
+                          </p>
+                          <p className='text-sm text-gray-500'>
+                            {coverFile?.name}
+                          </p>
+                        </div>
+                      </object>
+                    </div>
+                  ) : formData.cover ? (
+                    isPdfUrl(formData.cover) ? (
+                      <div className='w-full h-full flex flex-col items-center justify-center'>
+                        <iframe
+                          src={formData.cover}
+                          width='100%'
+                          height='100%'
+                          className='w-full h-full'
+                          title='PDF Preview'>
+                          <p>Tu navegador no puede mostrar PDFs embebidos.</p>
+                        </iframe>
+                      </div>
+                    ) : (
+                      <Image
+                        src={formData.cover || "/placeholder.svg"}
+                        alt={`Portada de ${formData.title}`}
+                        fill
+                        className='object-cover'
+                      />
+                    )
                   ) : (
                     <div className='w-full h-full flex items-center justify-center'>
                       <BookOpen className='h-16 w-16 text-gray-300' />
@@ -361,21 +490,75 @@ export default function BookDetailPage() {
                     </div>
                   )}
                 </div>
-                <div className='w-full space-y-2'>
-                  <Label
-                    htmlFor='cover'
-                    className='flex items-center gap-2 text-gray-700'>
-                    <ImageIcon className='h-4 w-4 text-purple-600' />
-                    URL de la Portada
-                  </Label>
-                  <Input
-                    id='cover'
-                    name='cover'
-                    value={formData.cover || ""}
-                    onChange={handleChange}
-                    placeholder='https://ejemplo.com/portada.jpg'
-                    className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                  />
+
+                <div className='w-full space-y-4'>
+                  <div className='space-y-2'>
+                    <Label
+                      htmlFor='cover'
+                      className='flex items-center gap-2 text-gray-700'>
+                      <ImageIcon className='h-4 w-4 text-purple-600' />
+                      URL de la Portada
+                    </Label>
+                    <Input
+                      id='cover'
+                      name='cover'
+                      value={formData.cover || ""}
+                      onChange={handleChange}
+                      placeholder='https://ejemplo.com/portada.jpg'
+                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label
+                      htmlFor='coverFile'
+                      className='flex items-center gap-2 text-gray-700'>
+                      <ImageIcon className='h-4 w-4 text-purple-600' />
+                      Subir Portada (Imagen o PDF)
+                    </Label>
+                    <div className='flex gap-2'>
+                      <input
+                        ref={fileInputRef}
+                        type='file'
+                        id='coverFile'
+                        accept='image/*,application/pdf'
+                        onChange={handleFileChange}
+                        className='hidden'
+                      />
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={() => fileInputRef.current?.click()}
+                        className='flex-1 border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
+                        {coverFile ? coverFile.name : "Seleccionar archivo"}
+                      </Button>
+                      <Button
+                        type='button'
+                        disabled={!coverFile || uploadingCover}
+                        onClick={handleUploadCover}
+                        className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                        {uploadingCover ? (
+                          <span className='flex items-center'>
+                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />{" "}
+                            Subiendo...
+                          </span>
+                        ) : (
+                          <span className='flex items-center'>
+                            <Save className='mr-2 h-4 w-4' /> Subir
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                    {/* Reemplazar el mensaje debajo del botón de subida */}
+                    {coverFile && (
+                      <p className='text-xs text-purple-600 italic'>
+                        {fileType === "pdf"
+                          ? "Archivo PDF seleccionado: "
+                          : "Imagen seleccionada: "}
+                        {coverFile.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

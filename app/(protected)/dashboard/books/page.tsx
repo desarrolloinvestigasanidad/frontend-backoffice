@@ -15,7 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackgroundBlobs } from "@/components/background-blobs";
-import { Breadcrumb } from "@/components/breadcrumb";
 import {
   BookOpen,
   Plus,
@@ -31,6 +30,7 @@ import {
   List,
   Filter,
   BookText,
+  FileText,
 } from "lucide-react";
 
 type Book = {
@@ -68,6 +68,15 @@ export default function BooksPage() {
 
   const handleMouseLeave = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: false }));
+  };
+
+  // Función para detectar si una URL es de un PDF
+  const isPdfUrl = (url: string | undefined | null): boolean => {
+    if (!url) return false;
+    // Intentar extraer el nombre del archivo antes de los parámetros de consulta
+    const urlWithoutParams = url.split("?")[0];
+    // Verificar si contiene .pdf en la parte del path (no solo al final)
+    return urlWithoutParams.toLowerCase().includes(".pdf");
   };
 
   useEffect(() => {
@@ -386,12 +395,23 @@ export default function BooksPage() {
                     <div className='flex items-center gap-4'>
                       <div className='relative w-24 h-32 rounded-md overflow-hidden bg-gray-100 flex-shrink-0'>
                         {book.cover ? (
-                          <Image
-                            src={book.cover || "/placeholder.svg"}
-                            alt={`Portada de ${book.title}`}
-                            fill
-                            className='object-cover'
-                          />
+                          isPdfUrl(book.cover) ? (
+                            // Vista previa para PDF
+                            <div className='w-full h-full flex flex-col items-center justify-center bg-purple-50 p-2'>
+                              <FileText className='h-8 w-8 text-purple-600 mb-1' />
+                              <span className='text-xs text-center text-purple-700 font-medium'>
+                                PDF
+                              </span>
+                            </div>
+                          ) : (
+                            // Vista previa para imagen
+                            <Image
+                              src={book.cover || "/placeholder.svg"}
+                              alt={`Portada de ${book.title}`}
+                              fill
+                              className='object-cover'
+                            />
+                          )
                         ) : (
                           <div className='w-full h-full flex items-center justify-center'>
                             <BookOpen className='h-8 w-8 text-gray-300' />
@@ -496,12 +516,23 @@ export default function BooksPage() {
                         <div className='flex items-center gap-3'>
                           <div className='relative w-12 h-16 rounded-md overflow-hidden bg-gray-100 flex-shrink-0'>
                             {book.cover ? (
-                              <Image
-                                src={book.cover || "/placeholder.svg"}
-                                alt={`Portada de ${book.title}`}
-                                fill
-                                className='object-cover'
-                              />
+                              isPdfUrl(book.cover) ? (
+                                // Vista previa para PDF en vista de lista
+                                <div className='w-full h-full flex flex-col items-center justify-center bg-purple-50 p-1'>
+                                  <FileText className='h-6 w-6 text-purple-600 mb-1' />
+                                  <span className='text-[8px] text-center text-purple-700 font-medium'>
+                                    PDF
+                                  </span>
+                                </div>
+                              ) : (
+                                // Vista previa para imagen en vista de lista
+                                <Image
+                                  src={book.cover || "/placeholder.svg"}
+                                  alt={`Portada de ${book.title}`}
+                                  fill
+                                  className='object-cover'
+                                />
+                              )
                             ) : (
                               <div className='w-full h-full flex items-center justify-center'>
                                 <BookOpen className='h-6 w-6 text-gray-300' />
