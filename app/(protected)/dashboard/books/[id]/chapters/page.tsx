@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackgroundBlobs } from "@/components/background-blobs";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { BookCoverModal } from "@/components/book-cover-modal";
+// import { BookCoverModal } from "@/components/book-cover-modal"; // REMOVED
 
 import {
   BookOpen,
@@ -29,7 +29,6 @@ import {
   AlertCircle,
   Search,
   ArrowLeft,
-  Trash2,
   FileEdit,
   Filter,
   LayoutGrid,
@@ -86,7 +85,7 @@ export default function BookChaptersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
-  const [showCoverModal, setShowCoverModal] = useState(false);
+  // const [showCoverModal, setShowCoverModal] = useState(false); // REMOVED
 
   const handleMouseEnter = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -119,33 +118,12 @@ export default function BookChaptersPage() {
       .finally(() => setLoading(false));
   }, [bookId]);
 
-  const handleGenerateBook = () => setShowCoverModal(true);
-  const handleContinueGeneration = async (coverFile: File) => {
+  const handleGenerateBook = async () => {
     setGenerating(true);
     const token = localStorage.getItem("token");
 
     try {
-      // 1️⃣ Subir la portada
-      const form = new FormData();
-      form.append("cover", coverFile);
-
-      const uploadRes = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/cover`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: form,
-        }
-      );
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json();
-        throw new Error(err.message || "No se pudo subir la portada");
-      }
-      const { coverUrl } = await uploadRes.json();
-      setBook((b) => (b ? { ...b, cover: coverUrl } : b));
-      toast.success("Portada subida correctamente");
-
-      // 2️⃣ Generar el libro
+      // Generar el libro directamente sin solicitar portada
       const genRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
         {
@@ -154,7 +132,7 @@ export default function BookChaptersPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}), // tu endpoint no necesita contenido
+          body: JSON.stringify({}),
         }
       );
       if (!genRes.ok) {
@@ -163,18 +141,18 @@ export default function BookChaptersPage() {
       }
       const { url } = await genRes.json();
 
-      // 3️⃣ Abrir o descargar PDF
+      // Abrir o descargar PDF
       window.open(
         url.startsWith("http")
           ? url
           : `${process.env.NEXT_PUBLIC_BACKOFFICE_URL}${url}`,
         "_blank"
       );
+      toast.success("Libro generado correctamente");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
       setGenerating(false);
-      setShowCoverModal(false);
     }
   };
 
@@ -580,20 +558,6 @@ export default function BookChaptersPage() {
             </table>
           </div>
         )}
-
-        <BookCoverModal
-          isOpen={showCoverModal}
-          onClose={() => setShowCoverModal(false)}
-          onConfirm={(fileOrUrl) => {
-            if (fileOrUrl instanceof File) {
-              handleContinueGeneration(fileOrUrl);
-            } else {
-              console.error("Expected a File, but received a string.");
-            }
-          }}
-          bookTitle={book?.title}
-          currentCover={book?.cover}
-        />
       </div>
     </div>
   );
