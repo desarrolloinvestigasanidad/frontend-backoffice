@@ -42,7 +42,7 @@ type Book = {
   bookType: string;
   editionId?: string;
   editionTitle?: string;
-  status?: "pendiente" | "revisión" | "aprobado" | "rechazado";
+  status?: "desarrollo" | "pendiente" | "revisión" | "aprobado" | "rechazado";
   documentUrl?: string;
 };
 
@@ -159,6 +159,8 @@ export default function BooksPage() {
   // Función para obtener el color del badge según el estado
   const getStatusBadgeVariant = (status?: string) => {
     switch (status) {
+      case "desarrollo":
+        return "bg-blue-400 text-yellow-800 border-yellow-200";
       case "pendiente":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "revisión":
@@ -354,6 +356,7 @@ export default function BooksPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className='px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 text-sm'>
               <option value='all'>Todos los estados</option>
+              <option value='desarrollo'>Desarrollo</option>
               <option value='pendiente'>Pendiente</option>
               <option value='revisión'>Revisión</option>
               <option value='aprobado'>Aprobado</option>
