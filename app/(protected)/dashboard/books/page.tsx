@@ -43,6 +43,7 @@ type Book = {
   editionId?: string;
   editionTitle?: string;
   status?: "pendiente" | "revisión" | "aprobado" | "rechazado";
+  documentUrl?: string;
 };
 
 type Edition = {
@@ -521,25 +522,56 @@ export default function BooksPage() {
                         </motion.span>
                       </Button>
                     </Link>
-                    <Link href={`/dashboard/books/${book.id}/chapters`}>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                        onMouseEnter={() => handleMouseEnter(`view-${book.id}`)}
-                        onMouseLeave={() =>
-                          handleMouseLeave(`view-${book.id}`)
-                        }>
-                        <motion.span
-                          className='flex items-center'
-                          animate={{
-                            x: hoverStates[`view-${book.id}`] ? 2 : 0,
-                          }}
-                          transition={{ duration: 0.2 }}>
-                          <Eye className='mr-1 h-4 w-4' /> Ver Capítulos
-                        </motion.span>
-                      </Button>
-                    </Link>
+                    <div className='flex gap-2'>
+                      <Link href={`/dashboard/books/${book.id}/chapters`}>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                          onMouseEnter={() =>
+                            handleMouseEnter(`view-${book.id}`)
+                          }
+                          onMouseLeave={() =>
+                            handleMouseLeave(`view-${book.id}`)
+                          }>
+                          <motion.span
+                            className='flex items-center'
+                            animate={{
+                              x: hoverStates[`view-${book.id}`] ? 2 : 0,
+                            }}
+                            transition={{ duration: 0.2 }}>
+                            <Eye className='mr-1 h-4 w-4' /> Ver Capítulos
+                          </motion.span>
+                        </Button>
+                      </Link>
+                      {book.documentUrl && (
+                        <a
+                          href={book.documentUrl}
+                          target='_blank'
+                          rel='noopener noreferrer'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            className='border-green-200 text-green-700 hover:bg-green-50'
+                            onMouseEnter={() =>
+                              handleMouseEnter(`download-${book.id}`)
+                            }
+                            onMouseLeave={() =>
+                              handleMouseLeave(`download-${book.id}`)
+                            }>
+                            <motion.span
+                              className='flex items-center'
+                              animate={{
+                                x: hoverStates[`download-${book.id}`] ? 2 : 0,
+                              }}
+                              transition={{ duration: 0.2 }}>
+                              <FileText className='mr-1 h-4 w-4' />{" "}
+                              Ver/Descargar
+                            </motion.span>
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                   </CardFooter>
                 </Card>
               </motion.div>
@@ -656,6 +688,20 @@ export default function BooksPage() {
                               <Eye className='mr-1 h-4 w-4' /> Capítulos
                             </Button>
                           </Link>
+                          {book.documentUrl && (
+                            <a
+                              href={book.documentUrl}
+                              target='_blank'
+                              rel='noopener noreferrer'>
+                              <Button
+                                variant='outline'
+                                size='sm'
+                                className='border-green-200 text-green-700 hover:bg-green-50'>
+                                <FileText className='mr-1 h-4 w-4' />{" "}
+                                Ver/Descargar
+                              </Button>
+                            </a>
+                          )}
                         </div>
                       </td>
                     </tr>
