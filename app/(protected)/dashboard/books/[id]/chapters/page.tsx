@@ -123,7 +123,6 @@ export default function BookChaptersPage() {
     const token = localStorage.getItem("token");
 
     try {
-      // Generar el libro directamente sin solicitar portada
       const genRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
         {
@@ -132,7 +131,6 @@ export default function BookChaptersPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}),
         }
       );
       if (!genRes.ok) {
@@ -141,13 +139,12 @@ export default function BookChaptersPage() {
       }
       const { url } = await genRes.json();
 
-      // Abrir o descargar PDF
-      window.open(
-        url.startsWith("http")
-          ? url
-          : `${process.env.NEXT_PUBLIC_BACKOFFICE_URL}${url}`,
-        "_blank"
-      );
+      // ✂️ ABRIR DIRECTO, ya es https://bucket.s3.region.amazonaws.com/…
+      window.open(url, "_blank");
+
+      // 💡 Actualiza el estado local para que aparezca el botón de “Descargar PDF”
+      setBook((prev) => (prev ? { ...prev, documentUrl: url } : prev));
+
       toast.success("Libro generado correctamente");
     } catch (err: any) {
       toast.error(err.message);
