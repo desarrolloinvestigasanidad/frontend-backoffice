@@ -65,6 +65,7 @@ type BookT = {
   price: number;
   status: string;
   documentUrl?: string; // Added documentUrl property
+  authorId: string; // Added authorId property
 };
 
 /* ---------------------------------------------------------------------- */
@@ -85,6 +86,10 @@ export default function BookChaptersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
+
+  const [certGenerating, setCertGenerating] = useState<Record<string, boolean>>(
+    {}
+  );
   // const [showCoverModal, setShowCoverModal] = useState(false); // REMOVED
 
   const handleMouseEnter = (id: string) =>
@@ -152,7 +157,35 @@ export default function BookChaptersPage() {
       setGenerating(false);
     }
   };
-
+  const handleGenerateCert = async (chapterId: string) => {
+    setCertGenerating((prev) => ({ ...prev, [chapterId]: true }));
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/certificates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: book?.authorId,
+            bookId,
+            chapterId,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error((await res.json()).message || "Error");
+      const { certificate } = await res.json();
+      window.open(certificate.documentUrl, "_blank");
+      toast.success("Certificado generado");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCertGenerating((prev) => ({ ...prev, [chapterId]: false }));
+    }
+  };
   // filtros y orden
   const filteredChapters = chapters
     .filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -485,6 +518,15 @@ export default function BookChaptersPage() {
                         </motion.span>
                       </Button>
                     </Link>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      disabled={certGenerating[chapter.id]}
+                      onClick={() => handleGenerateCert(chapter.id)}>
+                      {certGenerating[chapter.id]
+                        ? "Generando…"
+                        : "Certificado"}
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
@@ -547,6 +589,15 @@ export default function BookChaptersPage() {
                             Descargar PDF
                           </Button>
                         )}
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          disabled={certGenerating[chapter.id]}
+                          onClick={() => handleGenerateCert(chapter.id)}>
+                          {certGenerating[chapter.id]
+                            ? "Generando…"
+                            : "Certificado"}
+                        </Button>
                       </div>
                     </td>
                   </tr>
