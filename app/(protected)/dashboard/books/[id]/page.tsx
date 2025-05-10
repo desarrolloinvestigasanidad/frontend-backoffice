@@ -297,7 +297,7 @@ export default function BookDetailPage() {
   };
   // Define allApproved based on your application's logic
   const allApproved = formData.chapters?.every(
-    (chapter: any) => chapter.status === "approved"
+    (chapter: any) => chapter.status === "aprobado"
   );
 
   const handleGenerateBook = async () => {
