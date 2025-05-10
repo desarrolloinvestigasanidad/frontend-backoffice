@@ -3,6 +3,8 @@
 import type React from "react";
 
 import { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,6 +42,7 @@ import {
   Hash,
   Tag,
   Info,
+  Book,
 } from "lucide-react";
 
 export default function BookDetailPage() {
@@ -63,7 +66,7 @@ export default function BookDetailPage() {
   const [fileType, setFileType] = useState<"image" | "pdf" | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [generating, setGenerating] = useState(false);
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
   };
@@ -136,7 +139,9 @@ export default function BookDetailPage() {
   }, [editionId, bookId]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
@@ -290,7 +295,47 @@ export default function BookDetailPage() {
       setDeleting(false);
     }
   };
+  // Define allApproved based on your application's logic
+  const allApproved = formData.chapters?.every(
+    (chapter: any) => chapter.status === "approved"
+  );
 
+  const handleGenerateBook = async () => {
+    setGenerating(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const genRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/generate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!genRes.ok) {
+        const err = await genRes.json();
+        throw new Error(err.message || "Error al generar el libro");
+      }
+      const { url } = await genRes.json();
+
+      // ✂️ ABRIR DIRECTO, ya es https://bucket.s3.region.amazonaws.com/…
+      window.open(url, "_blank");
+
+      // 💡 Actualiza el estado local para que aparezca el botón de “Descargar PDF”
+      toast.success("Libro generado correctamente", {
+        position: "top-right",
+      });
+
+      toast.success("Libro generado correctamente");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
   // Check if the book is an edition book
   const isEditionBook = formData.bookType === "libro edición";
 
@@ -584,6 +629,27 @@ export default function BookDetailPage() {
                 </div>
               </CardHeader>
               <CardContent className='space-y-6'>
+                {/* Estado del libro */}
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='status'
+                    className='flex items-center gap-2 text-gray-700'>
+                    <Tag className='h-4 w-4 text-purple-600' />
+                    Estado
+                  </Label>
+                  <select
+                    id='status'
+                    name='status'
+                    value={formData.status || "borrador"}
+                    onChange={handleChange}
+                    className='w-full border-gray-200 focus:border-purple-300 focus:ring-purple-200 rounded-md p-2'>
+                    <option value='borrador'>Borrador</option>
+                    <option value='pendiente'>Pendiente</option>
+                    <option value='rechazado'>Rechazado</option>
+                    <option value='aprobado'>Aprobado</option>
+                  </select>
+                </div>
+
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                   <div className='space-y-2'>
                     <Label
@@ -617,7 +683,6 @@ export default function BookDetailPage() {
                     />
                   </div>
 
-                  {/* Show price for all books, but disable for edition books */}
                   <div className='space-y-2'>
                     <Label
                       htmlFor='price'
@@ -641,7 +706,6 @@ export default function BookDetailPage() {
                       </p>
                     )}
                   </div>
-
                   <div className='space-y-2'>
                     <Label
                       htmlFor='isbn'
@@ -744,12 +808,13 @@ export default function BookDetailPage() {
                     <Info className='h-4 w-4 text-purple-600' />
                     <AlertDescription>
                       Este es un libro de edición. Las fechas se heredan
-                      automáticamente de la edición y no tiene precio.
+                      automáticamente y no tiene precio.
                     </AlertDescription>
                   </Alert>
                 )}
               </CardContent>
-              <CardFooter className='flex justify-between'>
+
+              <CardFooter className='flex flex-wrap justify-between gap-2'>
                 <div className='flex gap-2'>
                   <Button
                     variant='destructive'
@@ -786,27 +851,56 @@ export default function BookDetailPage() {
                     <ChevronLeft className='mr-2 h-4 w-4' /> Volver
                   </Button>
                 </div>
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
-                  onMouseEnter={() => handleMouseEnter("save")}
-                  onMouseLeave={() => handleMouseLeave("save")}>
-                  {saving ? (
-                    <span className='flex items-center'>
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />{" "}
-                      Guardando...
-                    </span>
-                  ) : (
-                    <motion.span
-                      className='flex items-center'
-                      animate={{ x: hoverStates["save"] ? 2 : 0 }}
-                      transition={{ duration: 0.2 }}>
-                      <Save className='mr-2 h-4 w-4' /> Guardar Cambios
-                    </motion.span>
-                  )}
-                </Button>
+                <div className='flex gap-2'>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
+                    onMouseEnter={() => handleMouseEnter("save")}
+                    onMouseLeave={() => handleMouseLeave("save")}>
+                    {saving ? (
+                      <span className='flex items-center'>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />{" "}
+                        Guardando...
+                      </span>
+                    ) : (
+                      <motion.span
+                        className='flex items-center'
+                        animate={{ x: hoverStates["save"] ? 2 : 0 }}
+                        transition={{ duration: 0.2 }}>
+                        <Save className='mr-2 h-4 w-4' /> Guardar Cambios
+                      </motion.span>
+                    )}
+                  </Button>
+
+                  <Button
+                    onClick={handleGenerateBook}
+                    disabled={!allApproved || generating}
+                    className='bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900'
+                    onMouseEnter={() => handleMouseEnter("generateBook")}
+                    onMouseLeave={() => handleMouseLeave("generateBook")}>
+                    {generating ? (
+                      <span className='flex items-center'>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />{" "}
+                        Generando...
+                      </span>
+                    ) : (
+                      <motion.span
+                        className='flex items-center'
+                        animate={{ x: hoverStates["generateBook"] ? 2 : 0 }}
+                        transition={{ duration: 0.2 }}>
+                        <Book className='mr-2 h-4 w-4' /> Generar Libro
+                      </motion.span>
+                    )}
+                  </Button>
+                </div>
               </CardFooter>
+
+              {!allApproved && (
+                <p className='text-xs text-red-500 mt-2'>
+                  Debes aprobar todos los capítulos antes de generar.
+                </p>
+              )}
             </Card>
           </motion.div>
         </div>
