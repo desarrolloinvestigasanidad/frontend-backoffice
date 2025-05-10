@@ -67,6 +67,9 @@ export default function BookDetailPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [generating, setGenerating] = useState(false);
+
+  const [chapters, setChapters] = useState<any[]>([]);
+
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
   };
@@ -137,7 +140,24 @@ export default function BookDetailPage() {
       setLoading(false);
     }
   }, [editionId, bookId]);
-
+  useEffect(() => {
+    const fetchChapters = async () => {
+      if (!bookId) return;
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/books/${bookId}/chapters`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) throw new Error("Error al cargar capítulos");
+        const data = await res.json();
+        setChapters(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchChapters();
+  }, [bookId]);
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -296,9 +316,9 @@ export default function BookDetailPage() {
     }
   };
   // Define allApproved based on your application's logic
-  const allApproved = formData.chapters?.every(
-    (chapter: any) => chapter.status === "aprobado"
-  );
+  const allApproved =
+    chapters.length > 0 &&
+    chapters.every((chapter) => chapter.status.toLowerCase() === "aprobado");
 
   const handleGenerateBook = async () => {
     setGenerating(true);
