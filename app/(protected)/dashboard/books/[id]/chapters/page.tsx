@@ -170,13 +170,15 @@ export default function BookChaptersPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            userId: book?.authorId,
             bookId,
             chapterId,
           }),
         }
       );
-      if (!res.ok) throw new Error((await res.json()).message || "Error");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Error al generar certificado");
+      }
       const { certificate } = await res.json();
       window.open(certificate.documentUrl, "_blank");
       toast.success("Certificado generado");
@@ -186,6 +188,7 @@ export default function BookChaptersPage() {
       setCertGenerating((prev) => ({ ...prev, [chapterId]: false }));
     }
   };
+
   // filtros y orden
   const filteredChapters = chapters
     .filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
