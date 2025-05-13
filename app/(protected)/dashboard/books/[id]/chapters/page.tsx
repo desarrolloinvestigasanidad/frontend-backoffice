@@ -86,7 +86,7 @@ export default function BookChaptersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
-
+  const [bookCertGenerating, setBookCertGenerating] = useState(false);
   const [certGenerating, setCertGenerating] = useState<Record<string, boolean>>(
     {}
   );
@@ -157,6 +157,37 @@ export default function BookChaptersPage() {
       setGenerating(false);
     }
   };
+  const handleGenerateBookCert = async () => {
+    setBookCertGenerating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/certificates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            bookId,
+            type: "book_author",
+          }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Error al generar certificado de libro");
+      }
+      const { certificate } = await res.json();
+      window.open(certificate.documentUrl, "_blank");
+      toast.success("Certificado de libro generado");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBookCertGenerating(false);
+    }
+  };
   const handleGenerateCert = async (chapterId: string) => {
     setCertGenerating((prev) => ({ ...prev, [chapterId]: true }));
     try {
@@ -172,6 +203,7 @@ export default function BookChaptersPage() {
           body: JSON.stringify({
             bookId,
             chapterId,
+            type: "chapter_author",
           }),
         }
       );
@@ -245,7 +277,7 @@ export default function BookChaptersPage() {
     <div className='relative overflow-hidden min-h-screen py-8'>
       <BackgroundBlobs />
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
-        {/* Header + acciones */}
+        {/* Header  acciones */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -301,6 +333,12 @@ export default function BookChaptersPage() {
                   <Book className='mr-2 h-4 w-4' />
                   {generating ? "Generando…" : "Generar Libro"}
                 </motion.span>
+              </Button>
+              <Button
+                disabled={bookCertGenerating}
+                className='ml-3 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900'
+                onClick={handleGenerateBookCert}>
+                {bookCertGenerating ? "Generando…" : "Certificado de Libro"}
               </Button>
               {!allApproved && (
                 <p className='text-xs text-red-500 mt-1'>
@@ -528,7 +566,7 @@ export default function BookChaptersPage() {
                       onClick={() => handleGenerateCert(chapter.id)}>
                       {certGenerating[chapter.id]
                         ? "Generando…"
-                        : "Certificado"}
+                        : "Certificado de Autor de Capítulo"}
                     </Button>
                   </CardFooter>
                 </Card>
