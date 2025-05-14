@@ -1,7 +1,5 @@
 "use client";
 
-// BookChaptersPage.tsx – página de capítulos con botón «Generar libro»
-
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackgroundBlobs } from "@/components/background-blobs";
 import { Breadcrumb } from "@/components/breadcrumb";
-// import { BookCoverModal } from "@/components/book-cover-modal"; // REMOVED
 
 import {
   BookOpen,
@@ -40,6 +37,7 @@ import {
   Clock,
   Book,
 } from "lucide-react";
+import { BookGenerationOverlay } from "@/components/backoffice/book-generation-overlay";
 
 /* ---------------------------------------------------------------------- */
 /*  Types                                                                 */
@@ -258,6 +256,7 @@ export default function BookChaptersPage() {
   if (loading) {
     return (
       <div className='relative overflow-hidden min-h-screen py-8'>
+        <BookGenerationOverlay isGenerating={generating} />
         <BackgroundBlobs />
         <div className='container mx-auto px-4 relative z-10'>
           <div className='flex items-center justify-center h-64'>
