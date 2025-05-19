@@ -23,6 +23,7 @@ import {
   Mail,
   Phone,
   LogIn,
+  Loader2,
 } from "lucide-react";
 
 type Client = {
@@ -40,6 +41,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(""); // único filtro
   const [currentPage, setCurrentPage] = useState(1);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const clientsPerPage = 10;
 
   // Para ordenación
@@ -140,7 +142,35 @@ export default function ClientsPage() {
       alert(err.message || "Error al impersonar cliente");
     }
   };
-
+  // Toggle verificación en la lista
+  const handleToggleVerifyList = async (clientId: string) => {
+    try {
+      setVerifyingId(clientId);
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${clientId}/verify`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Error al cambiar verificación");
+      const { client: updated } = await res.json();
+      // Actualiza solo ese cliente en el array
+      setClients((prev) =>
+        prev.map((c) =>
+          c.id === clientId ? { ...c, verified: updated.verified } : c
+        )
+      );
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setVerifyingId(null);
+    }
+  };
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -330,7 +360,7 @@ export default function ClientsPage() {
                               </span>
                             </div>
                           </td>
-                          <td className='px-4 py-4'>
+                          <td className='px-4 py-4 flex items-center justify-center'>
                             <Badge
                               variant={isVer ? "default" : "outline"}
                               className={
@@ -338,6 +368,29 @@ export default function ClientsPage() {
                               }>
                               {isVer ? "Sí" : "No"}
                             </Badge>
+                            <label className='flex items-center cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                className='hidden'
+                                checked={isVer}
+                                disabled={verifyingId === c.id}
+                                onChange={() => handleToggleVerifyList(c.id)}
+                              />
+                              <span
+                                className={`relative inline-block w-10 h-6 transition-colors duration-200 ease-in-out rounded-full ${
+                                  verifyingId === c.id
+                                    ? "bg-gray-300"
+                                    : isVer
+                                    ? "bg-green-500"
+                                    : "bg-gray-400"
+                                }`}>
+                                <span
+                                  className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out ${
+                                    isVer ? "translate-x-4" : ""
+                                  }`}
+                                />
+                              </span>
+                            </label>
                           </td>
                           <td className='px-4 py-4 text-center'>
                             <div className='flex justify-center items-center gap-2'>

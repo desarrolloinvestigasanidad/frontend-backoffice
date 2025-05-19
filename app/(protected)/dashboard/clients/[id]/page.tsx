@@ -99,6 +99,7 @@ export default function ClientDetailPage() {
   const [newPassword, setNewPassword] = useState("");
   const [pwdMessage, setPwdMessage] = useState("");
   const [pwdType, setPwdType] = useState<"error" | "success">("success");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -341,6 +342,32 @@ export default function ClientDetailPage() {
       setPwdMessage(err.message);
     }
   };
+  // Toggle verificación en detalle
+  const handleToggleVerify = async () => {
+    if (!client) return;
+    try {
+      setIsVerifying(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/clients/${client.id}/verify`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Error al cambiar verificación");
+      const { client: updated } = await res.json();
+      setClient(updated);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className='relative overflow-hidden min-h-screen py-8'>
@@ -491,6 +518,38 @@ export default function ClientDetailPage() {
                   <CardDescription>
                     Datos personales y de contacto del cliente
                   </CardDescription>
+                </div>
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-3'>
+                    {client.verified && (
+                      <Badge variant='default'>Verificado</Badge>
+                    )}
+                    <div className='flex items-center'>
+                      <Label htmlFor='verify-switch' className='sr-only'>
+                        Verificar
+                      </Label>
+                      <button
+                        id='verify-switch'
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+                          client.verified ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                        onClick={handleToggleVerify}
+                        disabled={isVerifying}>
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                            client.verified ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                      <span className='ml-2 text-sm text-gray-700'>
+                        {isVerifying
+                          ? "Procesando..."
+                          : client.verified
+                          ? "Sí"
+                          : "No"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardHeader>
