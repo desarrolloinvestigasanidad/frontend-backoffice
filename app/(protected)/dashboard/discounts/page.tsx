@@ -76,6 +76,10 @@ type Edition = {
 
 const initialFormState = {
   code: "",
+  offerType: "percentage", // Nuevo campo
+  chapterCount: "", // Nuevo campo
+  creditCost: "", // Nuevo campo
+  fullBook: false, // Nuevo campo
   discountType: "percentage",
   value: "",
   minimumPrice: "",
@@ -264,6 +268,7 @@ export default function DiscountsPage() {
   const handleEdit = (discount: Discount) => {
     setDiscountToEdit(discount);
     setFormData({
+      ...initialFormState,
       code: discount.code,
       discountType: discount.discountType,
       value: discount.value.toString(),
@@ -435,56 +440,88 @@ export default function DiscountsPage() {
                     />
                   </div>
 
-                  {/* Tipo (percentage, fixed) */}
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='discountType'
-                      className='flex items-center gap-2 text-gray-700'>
-                      <Percent className='h-4 w-4 text-purple-600' />
-                      Tipo de Descuento
-                    </Label>
+                  {/* Tipo de Cupón */}
+                  <div>
+                    <Label htmlFor='offerType'>Tipo de Cupón</Label>
                     <Select
-                      value={formData.discountType}
-                      onValueChange={(value) =>
-                        handleSelectChange("discountType", value)
-                      }>
-                      <SelectTrigger className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
-                        <SelectValue placeholder='Selecciona el tipo' />
+                      value={formData.offerType}
+                      onValueChange={(v) => handleSelectChange("offerType", v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecciona tipo' />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value='percentage'>
                           Porcentaje (%)
                         </SelectItem>
                         <SelectItem value='fixed'>Fijo (€)</SelectItem>
+                        <SelectItem value='chapters'>Capítulos</SelectItem>
+                        <SelectItem value='credit'>Créditos</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Valor / Porcentaje */}
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='value'
-                      className='flex items-center gap-2 text-gray-700'>
-                      {formData.discountType === "percentage" ? (
-                        <Percent className='h-4 w-4 text-purple-600' />
-                      ) : (
-                        <DollarSign className='h-4 w-4 text-purple-600' />
-                      )}
-                      {formData.discountType === "percentage"
-                        ? "Porcentaje (%)"
-                        : "Valor (€)"}
-                    </Label>
-                    <Input
-                      id='value'
-                      name='value'
-                      type='number'
-                      value={formData.value}
-                      onChange={handleInputChange}
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                      step='0.01'
-                      required
-                    />
-                  </div>
+                  {/* Valor para percentage/fixed */}
+                  {["percentage", "fixed"].includes(formData.offerType) && (
+                    <div>
+                      <Label htmlFor='value'>
+                        {formData.offerType === "percentage"
+                          ? "Porcentaje (%)"
+                          : "Valor (€)"}
+                      </Label>
+                      <Input
+                        id='value'
+                        name='value'
+                        type='number'
+                        step='0.01'
+                        value={formData.value}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {/* Capítulos para chapters */}
+                  {formData.offerType === "chapters" && (
+                    <div>
+                      <Label htmlFor='chapterCount'>N.º de Capítulos</Label>
+                      <Input
+                        id='chapterCount'
+                        name='chapterCount'
+                        type='number'
+                        value={formData.chapterCount}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <div className='flex items-center mt-2'>
+                        <Checkbox
+                          id='fullBook'
+                          checked={formData.fullBook}
+                          onCheckedChange={(checked) =>
+                            handleCheckboxChange("fullBook", checked as boolean)
+                          }
+                        />
+                        <Label htmlFor='fullBook' className='ml-2'>
+                          Aplica a libro completo
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Créditos para credit */}
+                  {formData.offerType === "credit" && (
+                    <div>
+                      <Label htmlFor='creditCost'>Créditos</Label>
+                      <Input
+                        id='creditCost'
+                        name='creditCost'
+                        type='number'
+                        step='1'
+                        value={formData.creditCost}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  )}
 
                   {/* Máx. Usos */}
                   <div className='space-y-2'>
