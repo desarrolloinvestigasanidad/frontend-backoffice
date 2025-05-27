@@ -12,18 +12,20 @@ import { Eye, EyeOff, LogIn, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isVerifying, setIsVerifying] = useState(false);
+  // isLoading se usará tanto para la carga inicial (si la hubiera) como para el envío del formulario.
+  // Iniciamos en false, asumiendo que no hay una verificación de token inicial bloqueante.
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     password: "",
   });
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
+  // useEffect para limpiar el mensaje si los datos del formulario cambian
   useEffect(() => {
-    setIsVerifying(false);
-  }, []);
+    if (message) setMessage("");
+  }, [formData.id, formData.password]); // Solo se limpia el mensaje, no el 'message' en sí.
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,6 +36,12 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
+
+    // **Punto Clave: Limpiar token antiguo ANTES de intentar un nuevo login**
+    // Esto evita conflictos con tokens previos, ya sean válidos o inválidos.
+    localStorage.removeItem("token");
+    // Si guardaras otros datos del usuario en localStorage (ej: 'user'), límpialos también:
+    // localStorage.removeItem("user");
 
     try {
       const res: Response = await fetch(
@@ -58,30 +66,51 @@ export default function LoginPage() {
           setMessage(
             "Acceso restringido: debes ser administrador para acceder."
           );
+          // No es necesario limpiar el token aquí si ya se hizo al inicio del handleSubmit
+          // y no se ha seteado uno nuevo.
           setIsLoading(false);
           return;
         }
 
         localStorage.setItem("token", data.token);
+        // Opcional: Si el backend devuelve más datos del usuario que quieres guardar:
+        // const { token, ...userData } = data; // Suponiendo que data tiene más campos
+        // localStorage.setItem("user", JSON.stringify(userData));
         router.push("/dashboard");
+        // No es necesario setIsLoading(false) aquí porque la redirección desmontará el componente.
       } else {
-        setMessage(data.message || "Error al iniciar sesión.");
+        setMessage(
+          data.message || "Error al iniciar sesión. Verifica tus credenciales."
+        );
+        // Asegurarse de que no quede ningún token si el login falló.
+        // Aunque ya se limpió al inicio, esta es una doble seguridad.
+        localStorage.removeItem("token");
       }
     } catch (error) {
-      console.error(error);
-      setMessage("Error al iniciar sesión.");
+      console.error("Error en la petición de login:", error);
+      setMessage(
+        "Se produjo un error de red o en el servidor. Inténtalo de nuevo."
+      );
+      localStorage.removeItem("token"); // Limpiar en caso de error de red/inesperado
     } finally {
-      setIsLoading(false);
+      // Asegurarse de que setIsLoading(false) se llame solo si no hubo redirección
+      // o si el componente sigue montado.
+      // Si router.push ocurrió, este setIsLoading(false) podría dar un warning si el componente ya se desmontó.
+      // Una forma de manejarlo es verificar si el componente sigue montado,
+      // pero para este caso, usualmente es aceptable o el router.push() previene su ejecución.
+      // Para ser más explícito, podrías usar un flag:
+      if (window.location.pathname !== "/dashboard") {
+        // O una comprobación más robusta
+        setIsLoading(false);
+      }
     }
   };
 
-  if (isVerifying) {
-    return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='w-16 h-16 border-4 border-t-purple-500 border-b-purple-500/40 border-l-purple-300 border-r-purple-300/40 rounded-full animate-spin'></div>
-      </div>
-    );
-  }
+  // El estado `isVerifying` original y su `useEffect` han sido eliminados por simplicidad,
+  // ya que no realizaban una verificación de token activa.
+  // `isLoading` ahora maneja el feedback durante el submit.
+  // Si necesitas un spinner al cargar la página para verificar un token existente,
+  // se requeriría una lógica adicional en un useEffect (ver comentarios en la explicación).
 
   return (
     <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
@@ -98,15 +127,19 @@ export default function LoginPage() {
             width={300}
             height={75}
             className='absolute top-8 left-1/2 -translate-x-1/2 z-20 w-40 h-auto'
+            priority // Cargar la imagen del logo con prioridad
           />
           <Image
             src='https://images.pexels.com/photos/8376232/pexels-photo-8376232.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
             alt='Acceso Administrador'
             fill
+            sizes='(max-width: 768px) 100vw, 50vw' // Ayuda al navegador a elegir la mejor fuente
             className='object-cover absolute inset-0 mix-blend-overlay opacity-60'
           />
           <div className='absolute inset-0 bg-gradient-to-br from-purple-900/90 to-purple-700/90 z-10'></div>
-          <div className='relative z-20 p-6 md:p-8 h-full flex flex-col justify-center mt-16'>
+          <div className='relative z-20 p-6 md:p-8 h-full flex flex-col justify-center mt-16 md:mt-0'>
+            {" "}
+            {/* Ajustado mt en móvil */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -115,8 +148,8 @@ export default function LoginPage() {
                 Panel de Administración
               </h2>
               <p className='text-white/90 mb-6 text-sm md:text-base'>
-                Acceso exclusivo para administradores. Ingresa tus
-                DNI/NIE/Pasaporte para continuar.
+                Acceso exclusivo para administradores. Ingresa tus credenciales
+                para continuar.
               </p>
               <div className='flex items-center space-x-2 text-white/80'>
                 <div className='w-8 h-8 rounded-full bg-white/20 flex items-center justify-center'>
@@ -131,21 +164,21 @@ export default function LoginPage() {
         </div>
 
         {/* Columna derecha: Formulario */}
-        <div className='md:w-1/2 p-6 md:p-8 lg:p-12'>
+        <div className='md:w-1/2 p-6 md:p-8 lg:p-12 flex flex-col justify-center'>
+          {" "}
+          {/* flex y justify-center para centrar verticalmente el contenido */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className='text-center mb-6 md:mb-8'>
             <h1 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600 mb-2'>
-              Iniciar Sesión - Administrador
+              Iniciar Sesión
             </h1>
             <p className='text-gray-600 text-sm md:text-base'>
-              Ingresa tu DNI/NIE/Pasaporte para acceder al panel de
-              administración.
+              Usa tu identificador y contraseña para acceder.
             </p>
           </motion.div>
-
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,7 +187,7 @@ export default function LoginPage() {
             className='space-y-6'>
             <div className='space-y-2'>
               <Label htmlFor='id' className='text-gray-700 font-medium'>
-                Identificador
+                Identificador (DNI/NIE/Pasaporte)
               </Label>
               <div className='relative group'>
                 <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
@@ -165,9 +198,10 @@ export default function LoginPage() {
                     name='id'
                     placeholder='Introduce tu identificador'
                     required
+                    autoComplete='username' // Ayuda a los gestores de contraseñas
                     value={formData.id}
                     onChange={handleChange}
-                    className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                    className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500 py-3 px-4' // Clases mejoradas
                   />
                 </div>
               </div>
@@ -184,16 +218,20 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     id='password'
                     name='password'
+                    placeholder='Introduce tu contraseña'
                     required
+                    autoComplete='current-password' // Ayuda a los gestores de contraseñas
                     value={formData.password}
                     onChange={handleChange}
-                    className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
+                    className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500 py-3 px-4 pr-10' // Clases mejoradas
                   />
                   <button
                     type='button'
                     onClick={() => setShowPassword(!showPassword)}
-                    className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
-                    aria-label='Toggle password visibility'>
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-md'
+                    aria-label={
+                      showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                    }>
                     {showPassword ? (
                       <EyeOff className='w-5 h-5' />
                     ) : (
@@ -207,10 +245,19 @@ export default function LoginPage() {
             <Button
               type='submit'
               disabled={isLoading}
-              className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/30 group'>
+              className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/30 group py-3 text-base font-semibold'>
               <span className='flex items-center justify-center'>
-                {isLoading ? "Accediendo..." : "Acceder"}
-                <ArrowRight className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
+                {isLoading ? (
+                  <>
+                    <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2'></div>
+                    Accediendo...
+                  </>
+                ) : (
+                  "Acceder"
+                )}
+                {!isLoading && (
+                  <ArrowRight className='ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1' />
+                )}
               </span>
             </Button>
 
@@ -218,24 +265,29 @@ export default function LoginPage() {
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className='mt-4 text-center text-red-600 bg-red-50 p-2 rounded-md'>
+                className={`mt-4 text-center p-3 rounded-md text-sm ${
+                  message.includes("Acceso restringido") ||
+                  message.includes("Error") ||
+                  message.includes("Verifica")
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-blue-50 text-blue-700 border border-blue-200" // Para mensajes informativos si los hubiera
+                }`}>
                 {message}
               </motion.p>
             )}
           </motion.form>
-
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className='mt-8 space-y-4'>
-            <div className='text-center'>
-              <Link
-                href='/reset-password'
-                className='text-sm text-purple-600 hover:text-purple-800 hover:underline transition-colors'>
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
+            className='mt-8 text-center'>
+            {" "}
+            {/* Eliminado space-y-4 innecesario */}
+            <Link
+              href='/reset-password' // Asegúrate que esta ruta existe
+              className='text-sm text-purple-600 hover:text-purple-800 hover:underline transition-colors'>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </motion.div>
         </div>
       </motion.div>
