@@ -73,6 +73,13 @@ export default function BooksPage() {
     setHoverStates((prev) => ({ ...prev, [id]: false }));
   };
 
+  // Función para obtener el título de la edición basado en el ID
+  const getEditionTitle = (editionId: string | undefined): string | null => {
+    if (!editionId) return null;
+    const edition = editions.find((ed) => ed.id === editionId);
+    return edition ? edition.title : null;
+  };
+
   // Función para detectar si una URL es de un PDF
   const isPdfUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
@@ -483,11 +490,13 @@ export default function BooksPage() {
                             {book.bookType || "Libro propio"}
                           </span>
                         </div>
-                        {book.editionTitle && (
+                        {getEditionTitle(book.editionId) && (
                           <div className='flex items-center text-sm text-gray-600'>
                             <BookText className='h-4 w-4 mr-2 text-purple-600' />
                             <span className='font-medium'>Edición:</span>
-                            <span className='ml-2'>{book.editionTitle}</span>
+                            <span className='ml-2'>
+                              {getEditionTitle(book.editionId)}
+                            </span>
                           </div>
                         )}
                         {book.bookType !== "libro edición" && (
@@ -652,8 +661,10 @@ export default function BooksPage() {
                         </Badge>
                       </td>
                       <td className='px-4 py-4'>
-                        {book.editionTitle ? (
-                          <span className='text-sm'>{book.editionTitle}</span>
+                        {getEditionTitle(book.editionId) ? (
+                          <span className='text-sm'>
+                            {getEditionTitle(book.editionId)}
+                          </span>
                         ) : (
                           <span className='text-sm text-gray-500'>-</span>
                         )}
