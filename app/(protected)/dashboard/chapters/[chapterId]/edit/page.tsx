@@ -126,6 +126,8 @@ export default function EditChapterPage() {
   const [bookTitle, setBookTitle] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
+  const [rejectionReason, setRejectionReason] = useState("");
+
   const handleMouseEnter = (id: string) =>
     setHoverStates((prev) => ({ ...prev, [id]: true }));
   const handleMouseLeave = (id: string) =>
@@ -156,6 +158,7 @@ export default function EditChapterPage() {
         setBibliography(data.bibliography || "");
         setStatus(data.status || "borrador");
         setBookTitle(data.bookTitle || "");
+        setRejectionReason(data.rejectionReason || "");
       } catch (err: any) {
         setError(err.message);
         setMessageType("error");
@@ -184,6 +187,7 @@ export default function EditChapterPage() {
         discussion,
         bibliography,
         status,
+        rejectionReason: status === "rechazado" ? rejectionReason : null,
       };
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/${chapterId}`,
@@ -455,6 +459,25 @@ export default function EditChapterPage() {
                       <SelectItem value='rechazado'>Rechazado</SelectItem>
                     </SelectContent>
                   </Select>
+                  {status === "rechazado" && (
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='rejectionReason'
+                        className='flex items-center gap-2 text-gray-700'>
+                        <MessageSquare className='h-4 w-4 text-red-600' />
+                        Motivo del Rechazo
+                      </Label>
+                      <Textarea
+                        id='rejectionReason'
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        rows={4}
+                        className='border-red-200 focus:border-red-300 focus:ring-red-200'
+                        placeholder='Escribe aquí el motivo del rechazo...'
+                        required={status === "rechazado"}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
 
