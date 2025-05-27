@@ -38,6 +38,8 @@ type Payment = {
   status: string;
   paymentDate: string;
   invoiced: number; // 0 o 1
+  editionId?: string; // ← NUEVO: pago de edición
+  bookId?: string;
 };
 
 // Tipo de dato del cliente
@@ -72,6 +74,7 @@ export default function PaymentsPage() {
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [invoicedFilter, setInvoicedFilter] = useState<string>("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -255,6 +258,15 @@ export default function PaymentsPage() {
 
     return matchesSearch && matchesStatus && matchesMethod && matchesInvoiced;
   });
+  useEffect(() => {
+    setPayments((prev) =>
+      [...prev].sort((a, b) => {
+        const ta = new Date(a.paymentDate).getTime();
+        const tb = new Date(b.paymentDate).getTime();
+        return sortOrder === "desc" ? tb - ta : ta - tb;
+      })
+    );
+  }, [sortOrder]);
 
   if (loading) {
     return (
@@ -285,20 +297,6 @@ export default function PaymentsPage() {
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
           <Breadcrumb items={[{ label: "Gestión de Pagos", href: "#" }]} />
-          <Link href='/dashboard/payments/new'>
-            <Button
-              className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
-              onMouseEnter={() => handleMouseEnter("newPayment")}
-              onMouseLeave={() => handleMouseLeave("newPayment")}>
-              <motion.span
-                className='flex items-center'
-                animate={{ x: hoverStates["newPayment"] ? 3 : 0 }}
-                transition={{ duration: 0.2 }}>
-                <Plus className='mr-2 h-4 w-4' />
-                Registrar Pago
-              </motion.span>
-            </Button>
-          </Link>
         </motion.div>
 
         <motion.div
@@ -407,7 +405,17 @@ export default function PaymentsPage() {
               ))}
             </select>
           </div>
-
+          <div className='flex items-center gap-2'>
+            <Clock className='h-4 w-4 text-purple-600' />
+            <span className='text-sm font-medium text-gray-700'>Ordenar:</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "desc" | "asc")}
+              className='px-2 py-1 rounded-lg border border-gray-200 text-sm'>
+              <option value='desc'>Más recientes</option>
+              <option value='asc'>Más antiguos</option>
+            </select>
+          </div>
           <div className='flex items-center gap-2'>
             <FileText className='h-4 w-4 text-purple-600' />
             <span className='text-sm font-medium text-gray-700'>
@@ -515,7 +523,15 @@ export default function PaymentsPage() {
                             {payment.invoiced === 1 ? "Sí" : "No"}
                           </span>
                         </div>
-
+                        <div className='flex items-center text-sm text-gray-600'>
+                          <FileText className='h-4 w-4 mr-2 text-purple-600 flex-shrink-0' />
+                          <span className='font-medium'>Tipo:</span>
+                          <Badge variant='outline' className='ml-2'>
+                            {payment.editionId
+                              ? "Edición"
+                              : "Libro Personalizado"}
+                          </Badge>
+                        </div>
                         {client && (
                           <>
                             <div className='flex items-center text-sm text-gray-600'>
@@ -603,6 +619,7 @@ export default function PaymentsPage() {
                     <th className='px-4 py-3 text-left'>Fecha</th>
                     <th className='px-4 py-3 text-left'>Estado</th>
                     <th className='px-4 py-3 text-left'>Facturado</th>
+                    <th className='px-4 py-3 text-left'>Tipo</th>
                     <th className='px-4 py-3 text-center'>Acciones</th>
                   </tr>
                 </thead>
@@ -684,6 +701,16 @@ export default function PaymentsPage() {
                               : "No facturado"}
                           </Badge>
                         </td>
+                        <td className='px-4 py-4'>
+                          <Badge
+                            variant='outline'
+                            className='bg-purple-50 text-purple-700'>
+                            {payment.editionId
+                              ? "Edición"
+                              : "Libro Personalizado"}
+                          </Badge>
+                        </td>
+
                         <td className='px-4 py-4 text-center'>
                           <div className='flex justify-center gap-2'>
                             {payment.invoiced === 1 && (
