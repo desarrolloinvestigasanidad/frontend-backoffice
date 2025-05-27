@@ -451,7 +451,7 @@ export default function EditChapterPage() {
                     <SelectContent>
                       <SelectItem value='pendiente'>Pendiente</SelectItem>
                       <SelectItem value='aprobado'>Aprobado</SelectItem>
-                      <SelectItem value='publicado'>Publicado</SelectItem>
+
                       <SelectItem value='rechazado'>Rechazado</SelectItem>
                     </SelectContent>
                   </Select>
