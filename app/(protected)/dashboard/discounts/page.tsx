@@ -131,7 +131,7 @@ export default function DiscountsPage() {
       setDiscounts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al cargar los descuentos:", error);
-      setMessage("Error al cargar los descuentos. Inténtalo de nuevo.");
+
       setMessageType("error");
     }
   };
