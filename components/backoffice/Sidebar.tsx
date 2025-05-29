@@ -85,16 +85,16 @@ const navGroups = [
         href: "/dashboard/roles",
         icon: <Settings size={18} />,
       },
-      {
-        label: "Plantillas",
-        href: "/dashboard/templates",
-        icon: <FileText size={18} />,
-      },
-      {
-        label: "Certificados",
-        href: "/dashboard/certificates",
-        icon: <FileText size={18} />,
-      },
+      // {
+      //   label: "Plantillas",
+      //   href: "/dashboard/templates",
+      //   icon: <FileText size={18} />,
+      // },
+      // {
+      //   label: "Certificados",
+      //   href: "/dashboard/certificates",
+      //   icon: <FileText size={18} />,
+      // },
       {
         label: "Configuración",
         href: "/dashboard/configuration",

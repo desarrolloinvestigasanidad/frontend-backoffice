@@ -72,9 +72,9 @@ const configSections: ConfigSection[] = [
   },
   {
     id: "categorias",
-    title: "Categorías Libros",
+    title: "Categorías profesionales",
     icon: Layers3,
-    description: "Administra las categorías de libros.",
+    description: "Administra las categorías profesionales.",
     component: <ConfiguracionCategorias />,
   },
   {
