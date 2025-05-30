@@ -38,6 +38,7 @@ import {
   Book,
 } from "lucide-react";
 import { BookGenerationOverlay } from "@/components/backoffice/book-generation-overlay";
+import { useUser } from "@/app/context/UserContext";
 
 /* ---------------------------------------------------------------------- */
 /*  Types                                                                 */
@@ -72,6 +73,9 @@ type BookT = {
 
 export default function BookChaptersPage() {
   const { id: bookId } = useParams();
+  const { user } = useUser();
+  const userId = user?.id;
+
   const router = useRouter();
 
   const [book, setBook] = useState<BookT | null>(null);
@@ -169,6 +173,7 @@ export default function BookChaptersPage() {
           },
           body: JSON.stringify({
             bookId,
+            userId,
             type: "book_author",
           }),
         }
