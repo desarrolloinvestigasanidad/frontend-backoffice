@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,9 @@ export default function AuthLayout({
           defaultTheme='light'
           enableSystem
           disableTransitionOnChange>
-          <main className='h-screen w-screen overflow-auto'>{children}</main>
+          <main className='h-screen w-screen overflow-auto'>
+            <RedirectIfAuthenticated>{children}</RedirectIfAuthenticated>
+          </main>
         </ThemeProvider>
       </body>
     </html>

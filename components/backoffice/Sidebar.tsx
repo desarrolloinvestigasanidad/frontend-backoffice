@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Users,
@@ -19,8 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/app/context/UserContext";
 
-// Agrupar elementos relacionados
 const navGroups = [
   {
     title: "Principal",
@@ -85,16 +85,6 @@ const navGroups = [
         href: "/dashboard/roles",
         icon: <Settings size={18} />,
       },
-      // {
-      //   label: "Plantillas",
-      //   href: "/dashboard/templates",
-      //   icon: <FileText size={18} />,
-      // },
-      // {
-      //   label: "Certificados",
-      //   href: "/dashboard/certificates",
-      //   icon: <FileText size={18} />,
-      // },
       {
         label: "Configuración",
         href: "/dashboard/configuration",
@@ -106,13 +96,15 @@ const navGroups = [
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { setUser } = useUser();
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Inicializar todos los grupos como expandidos
   useEffect(() => {
     const initialExpanded: Record<string, boolean> = {};
     navGroups.forEach((group) => {
@@ -121,7 +113,6 @@ const Sidebar = () => {
     setExpandedGroups(initialExpanded);
   }, []);
 
-  // Detectar si es dispositivo móvil
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -129,7 +120,6 @@ const Sidebar = () => {
 
     checkIfMobile();
     window.addEventListener("resize", checkIfMobile);
-
     return () => {
       window.removeEventListener("resize", checkIfMobile);
     };
@@ -146,12 +136,18 @@ const Sidebar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Determinar si un elemento está activo
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === href;
-    }
+    if (href === "/dashboard") return pathname === href;
     return pathname.startsWith(href);
+  };
+
+  const handleLogout = () => {
+    console.log("🚪 Logout ejecutado");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    setUser(null);
+    window.dispatchEvent(new Event("storage"));
+    router.replace("/login");
   };
 
   const sidebarContent = (
@@ -220,19 +216,18 @@ const Sidebar = () => {
       </nav>
 
       <div className='mt-auto px-4 py-4 border-t border-gray-200'>
-        <Link
-          href='/login'
-          className='flex items-center px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors'>
+        <button
+          onClick={handleLogout}
+          className='flex items-center px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors w-full text-left'>
           <LogOut size={18} className='mr-3 text-gray-500' />
           <span>Cerrar Sesión</span>
-        </Link>
+        </button>
       </div>
     </>
   );
 
   return (
     <>
-      {/* Botón de menú móvil */}
       {isMobile && (
         <button
           onClick={toggleMobileMenu}
@@ -241,7 +236,6 @@ const Sidebar = () => {
         </button>
       )}
 
-      {/* Sidebar para móvil */}
       {isMobile ? (
         <div
           className={cn(
@@ -256,7 +250,6 @@ const Sidebar = () => {
           </div>
         </div>
       ) : (
-        // Sidebar para escritorio
         <div className='w-64 bg-white border-r border-gray-200 h-screen flex flex-col overflow-y-auto shadow-sm'>
           {sidebarContent}
         </div>

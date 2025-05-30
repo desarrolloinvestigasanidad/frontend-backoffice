@@ -49,9 +49,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
+      setUser(null); // ✅ importante
+      localStorage.removeItem("userId"); // ✅ asegúrate de limpiar
       setLoading(false);
       return;
     }
+
     try {
       const res = await apiFetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/profile`,
@@ -64,8 +67,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
       );
       if (!res.ok) {
+        localStorage.removeItem("token");
+        setUser(null);
         throw new Error("Error al obtener el perfil");
       }
+
       const data: User = await res.json();
       setUser(data);
       // Guarda el userId para usarlo en otros componentes

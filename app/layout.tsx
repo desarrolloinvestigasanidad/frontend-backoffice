@@ -2,8 +2,9 @@
 import { UserProvider } from "./context/UserContext";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "My App",
   description: "Descripción de mi app",
 };
@@ -17,9 +18,7 @@ export default function RootLayout({
     <html lang='es'>
       <body>
         <ThemeProvider attribute='class' defaultTheme='light'>
-          <main>
-            <UserProvider>{children}</UserProvider>
-          </main>
+          <UserProvider>{children}</UserProvider>
         </ThemeProvider>
       </body>
     </html>

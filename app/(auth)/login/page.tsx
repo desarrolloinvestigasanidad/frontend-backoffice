@@ -9,11 +9,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, ArrowRight } from "lucide-react";
+import { useUser } from "@/app/context/UserContext";
 
 export default function LoginPage() {
+  const { refreshUser } = useUser();
   const router = useRouter();
-  // isLoading se usará tanto para la carga inicial (si la hubiera) como para el envío del formulario.
-  // Iniciamos en false, asumiendo que no hay una verificación de token inicial bloqueante.
+
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -61,29 +62,29 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Verificar que roleId es 1 (administrador)
         if (Number(data.roleId) !== 1) {
           setMessage(
             "Acceso restringido: debes ser administrador para acceder."
           );
-          // No es necesario limpiar el token aquí si ya se hizo al inicio del handleSubmit
-          // y no se ha seteado uno nuevo.
           setIsLoading(false);
           return;
         }
 
         localStorage.setItem("token", data.token);
-        // Opcional: Si el backend devuelve más datos del usuario que quieres guardar:
-        // const { token, ...userData } = data; // Suponiendo que data tiene más campos
-        // localStorage.setItem("user", JSON.stringify(userData));
-        router.push("/dashboard");
-        // No es necesario setIsLoading(false) aquí porque la redirección desmontará el componente.
+
+        try {
+          await refreshUser(); // Espera a que se cargue el user
+          router.push("/dashboard"); // Redirige solo cuando esté cargado
+        } catch (error) {
+          console.error("❌ Error al refrescar usuario:", error);
+          setMessage("No se pudo cargar el perfil de usuario.");
+          setIsLoading(false);
+        }
       } else {
         setMessage(
           data.message || "Error al iniciar sesión. Verifica tus credenciales."
         );
-        // Asegurarse de que no quede ningún token si el login falló.
-        // Aunque ya se limpió al inicio, esta es una doble seguridad.
+
         localStorage.removeItem("token");
       }
     } catch (error) {
@@ -93,24 +94,11 @@ export default function LoginPage() {
       );
       localStorage.removeItem("token"); // Limpiar en caso de error de red/inesperado
     } finally {
-      // Asegurarse de que setIsLoading(false) se llame solo si no hubo redirección
-      // o si el componente sigue montado.
-      // Si router.push ocurrió, este setIsLoading(false) podría dar un warning si el componente ya se desmontó.
-      // Una forma de manejarlo es verificar si el componente sigue montado,
-      // pero para este caso, usualmente es aceptable o el router.push() previene su ejecución.
-      // Para ser más explícito, podrías usar un flag:
       if (window.location.pathname !== "/dashboard") {
-        // O una comprobación más robusta
         setIsLoading(false);
       }
     }
   };
-
-  // El estado `isVerifying` original y su `useEffect` han sido eliminados por simplicidad,
-  // ya que no realizaban una verificación de token activa.
-  // `isLoading` ahora maneja el feedback durante el submit.
-  // Si necesitas un spinner al cargar la página para verificar un token existente,
-  // se requeriría una lógica adicional en un useEffect (ver comentarios en la explicación).
 
   return (
     <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
