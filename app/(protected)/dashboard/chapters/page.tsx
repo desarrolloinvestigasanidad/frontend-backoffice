@@ -35,6 +35,7 @@ type Chapter = {
   bookTitle?: string;
   bookId?: string;
   bookType?: string; // Añadido para distinguir entre tipos de libros
+  editionId?: string; // Añadido para identificar ediciones
   createdAt?: string;
   updatedAt?: string;
 };
@@ -91,7 +92,7 @@ export default function ChaptersPage() {
         const chaptersWithBookTypes: ChapterWithBookType[] = chaptersArray.map(
           (chapter: Chapter): ChapterWithBookType => ({
             ...chapter,
-            bookType: chapter.bookType ?? "sin especificar",
+            bookType: chapter.editionId ? "edición" : "personalizado",
           })
         );
 
