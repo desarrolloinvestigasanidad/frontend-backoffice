@@ -36,7 +36,7 @@ import { ConfiguracionCategorias } from "@/components/configuration/configuracio
 // ELIMINA ConfiguracionComunidades y ConfiguracionProvincias si existen como archivos separados
 // import { ConfiguracionComunidades } from "@/components/configuration/configuracion-comunidades";
 // import { ConfiguracionProvincias } from "@/components/configuration/configuracion-provincias";
-import { ConfiguracionTerritorial } from "@/components/configuration/configuracion-territorial"; // NUEVO COMPONENTE
+// import { ConfiguracionTerritorial } from "@/components/configuration/configuracion-territorial"; // NUEVO COMPONENTE
 import { ConfiguracionEstadosLibro } from "@/components/configuration/configuracion-estados-libro";
 import { ConfiguracionEstadosCapitulo } from "@/components/configuration/configuracion-estados-capitulo";
 import { ConfiguracionTiposEstudio } from "@/components/configuration/configuracion-tipos-estudio";
@@ -81,14 +81,14 @@ const configSections: ConfigSection[] = [
     description: "Administra las categorías profesionales.",
     component: <ConfiguracionCategorias />,
   },
-  {
-    // MODIFICADO: Sección unificada para Comunidades y Provincias
-    id: "territorial_spain", // ID único para esta sección combinada
-    title: "Gestión Territorial (España)",
-    icon: MapPinned, // Icono representativo
-    description: "Administra Comunidades Autónomas y Provincias de España.",
-    component: <ConfiguracionTerritorial />, // Apunta al nuevo componente combinado
-  }, // SECCIÓN DE PROVINCIAS INDIVIDUAL ELIMINADA // { //  id: "provincias", //  title: "Provincias", //  icon: MapIcon, //  description: "Administra las provincias.", //  component: <ConfiguracionProvincias />, // Ya no se usa directamente // },
+  // {
+  //   // MODIFICADO: Sección unificada para Comunidades y Provincias
+  //   id: "territorial_spain", // ID único para esta sección combinada
+  //   title: "Gestión Territorial (España)",
+  //   icon: MapPinned, // Icono representativo
+  //   description: "Administra Comunidades Autónomas y Provincias de España.",
+  //   component: <ConfiguracionTerritorial />, // Apunta al nuevo componente combinado
+  // }, // SECCIÓN DE PROVINCIAS INDIVIDUAL ELIMINADA // { //  id: "provincias", //  title: "Provincias", //  icon: MapIcon, //  description: "Administra las provincias.", //  component: <ConfiguracionProvincias />, // Ya no se usa directamente // },
   {
     id: "tipos-estudio",
     title: "Tipos de Estudio",
