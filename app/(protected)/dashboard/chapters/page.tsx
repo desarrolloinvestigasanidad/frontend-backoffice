@@ -91,9 +91,7 @@ export default function ChaptersPage() {
         const chaptersWithBookTypes: ChapterWithBookType[] = chaptersArray.map(
           (chapter: Chapter): ChapterWithBookType => ({
             ...chapter,
-            bookType:
-              chapter.bookType ||
-              (Math.random() > 0.5 ? "personalizado" : "edición"),
+            bookType: chapter.bookType ?? "sin especificar",
           })
         );
 
